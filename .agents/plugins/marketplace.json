@@ -1,0 +1,20 @@
+{
+  "name": "wechat-mcp-local",
+  "interface": {
+    "displayName": "微桥 · WeChat MCP"
+  },
+  "plugins": [
+    {
+      "name": "wechat-mcp",
+      "source": {
+        "source": "local",
+        "path": "./plugins/wechat-mcp"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

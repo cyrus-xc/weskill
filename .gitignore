@@ -1,0 +1,26 @@
+# Private account state, payloads and research stay on the developer's machine.
+/.state/
+/research/
+/requirements-research.txt
+/scripts/*
+!/scripts/run_local_mcp.py
+!/scripts/check_release.py
+/native/cache_path_probe.c
+/native/README-readonly-executor.md
+
+# Dependencies and generated artifacts.
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+/native/build/
+/build/
+/dist/
+/.pytest_cache/
+/.coverage
+*.log
+*.core
+core
+.env
+.env.*
+!.env.example

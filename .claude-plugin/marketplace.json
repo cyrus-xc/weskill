@@ -1,0 +1,13 @@
+{
+  "name": "wechat-mcp-local",
+  "owner": {"name": "WeChat MCP contributors"},
+  "plugins": [
+    {
+      "name": "wechat-mcp",
+      "source": "./plugins/wechat-mcp",
+      "description": "微桥：Linux 微信本机 MCP 操作流程",
+      "version": "0.1.0",
+      "license": "MIT"
+    }
+  ]
+}

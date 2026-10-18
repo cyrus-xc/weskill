@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wechat-mcp"
+version = "0.1.0"
+description = "Experimental local MCP toolbox for native Linux WeChat"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+dependencies = ["mcp>=1.28,<2", "pyelftools>=0.33,<1"]
+
+[project.urls]
+Repository = "https://github.com/cyrus-xc/wechat-mcp"
+Issues = "https://github.com/cyrus-xc/wechat-mcp/issues"
+
+[project.optional-dependencies]
+hooks = ["frida==16.7.19"]
+
+[project.scripts]
+wechat-mcp = "wechat_mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+wechat_mcp = ["assets/*.js"]

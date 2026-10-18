@@ -1,0 +1,17 @@
+{
+  "name": "wechat-mcp",
+  "version": "0.1.0",
+  "description": "Use the local Linux WeChat MCP toolbox to find chats, read bounded history and send authorized text with durable idempotency.",
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "微桥 · WeChat MCP",
+    "shortDescription": "Linux 微信本机搜索、消息查询与幂等文本发送",
+    "longDescription": "配合单独安装的本机 WeChat MCP 服务，在 Linux 原生微信中查找联系人和群、查询限定会话的历史消息，并向用户指定的白名单目标发送文本。当前为 ARM64 特定构建的实验能力。",
+    "category": "Productivity",
+    "brandColor": "#35C7AE",
+    "logo": "./assets/logo.png",
+    "composerIcon": "./assets/logo.png",
+    "defaultPrompt": ["使用微桥检查本机微信连接，先列出当前可用能力。"]
+  }
+}

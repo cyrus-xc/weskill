@@ -1,0 +1,12 @@
+include README.md
+include .agents/plugins/marketplace.json .claude-plugin/marketplace.json
+include native/readonly_executor_shim.c native/readonly_executor_shim.S
+include scripts/run_local_mcp.py scripts/check_release.py
+recursive-include docs *.md
+recursive-include examples *.json
+recursive-include assets *.svg *.png
+recursive-include plugins *.json *.md *.yaml *.svg *.png
+prune research
+prune .state
+prune native/build
+global-exclude __pycache__ *.py[cod] *.core *.log

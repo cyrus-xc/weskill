@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">微桥 · WeChat MCP</title>
+  <desc id="desc">A mint conversation bubble containing a bridge between two endpoints.</desc>
+  <defs>
+    <linearGradient id="bg" x1="28" y1="20" x2="226" y2="236" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102C33"/><stop offset="1" stop-color="#071A22"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="50" y1="55" x2="206" y2="191" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#98F5D0"/><stop offset="1" stop-color="#35C7AE"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="60" fill="url(#bg)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="59.5" stroke="#B9FFE7" stroke-opacity=".12"/>
+  <path d="M57 62h142a15 15 0 0 1 15 15v91a15 15 0 0 1-15 15H99l-35 25v-25h-7a15 15 0 0 1-15-15V77a15 15 0 0 1 15-15Z" fill="url(#mint)"/>
+  <path d="M75 145h106M83 145v-21a45 45 0 0 1 90 0v21M106 109v36M150 109v36" stroke="#0B2830" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="75" cy="145" r="8" fill="#0B2830"/>
+  <circle cx="181" cy="145" r="8" fill="#0B2830"/>
+</svg>
