@@ -44,7 +44,8 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
                                               "search_contacts", "get_messages", "send_text_message", "send_image", "send_file",
                 "get_group_members", "get_group_info", "create_group", "invite_group_members",
                 "send_group_mention", "set_group_announcement", "pin_group_message",
-                "set_group_invitation_confirmation", "remove_group_members"])
+                "set_group_invitation_confirmation", "remove_group_members",
+                                              "get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact", "add_friend", "accept_friend_request"])
             report["experimental_backend_enabled"] = True
             report["connection_policy"] = {"max_attempts": 2, "attach_timeout_seconds": 15,
                                            "retry_scope": "fresh_worker_only_before_business_requests",
@@ -60,7 +61,7 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
             enabled = {"get_messages", "list_contacts", "list_groups", "send_private_text", "send_group_text", "send_image", "send_file", "get_group_members", "get_group_info",
                        "create_group", "invite_group_members", "mention_group_member", "send_group_announcement",
                        "edit_group_announcement", "pin_group_message", "group_invitation_confirmation",
-                       "remove_group_members"}
+                       "remove_group_members", "get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact", "add_friend", "accept_friend_request"}
             for operation in report["capabilities"]:
                 if operation["id"] in enabled:
                     operation["execution_available"] = True
@@ -115,14 +116,14 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
             readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=True
         ))
         def send_image(recipient_id: str, file_path: str, idempotency_key: str) -> dict[str, Any]:
-            """Send a local image once to a confirmed internal contact/group ID. Private-chat native sending is verified; group media is untested. No toolkit size/extension cap. Client success is sufficient. Preserve the key after timeout."""
+            """Send a local image once to a confirmed internal contact/group ID. Private and ordinary-group PNG sending is verified; other image formats are not individually verified. No toolkit size/extension cap. Client success is sufficient. Preserve the key after timeout."""
             return backend.send_image(recipient_id, file_path, idempotency_key)
 
         @server.tool(annotations=ToolAnnotations(
             readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=True
         ))
         def send_file(recipient_id: str, file_path: str, idempotency_key: str) -> dict[str, Any]:
-            """Send a local file once. Private-chat native sending is verified; group media is untested. No toolkit size/extension cap. Same key binds target, source path and bytes. Client success is sufficient; unknown never resends."""
+            """Send a local file once. Private and ordinary-group text-file sending is verified; other formats are not individually verified. No toolkit size/extension cap. Same key binds target, source path and bytes. Client success is sufficient; unknown never resends."""
             return backend.send_file(recipient_id, file_path, idempotency_key)
 
 
@@ -134,6 +135,37 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
         group_destructive = ToolAnnotations(readOnlyHint=False, destructiveHint=True,
                                             idempotentHint=True, openWorldHint=True)
 
+        @server.tool(annotations=group_read)
+        def get_friend_info(contact_ids: list[str]) -> dict[str, Any]:
+            """Read complete available local-native contact records for confirmed contact/member IDs, including nicknames, remarks, region, signature and avatars. This does not request a remote refresh. Missing records/fields are reported explicitly."""
+            return backend.get_friend_info(contact_ids)
+
+        @server.tool(annotations=group_read)
+        def list_friend_requests(limit: int | None = 20, offset: int = 0) -> dict[str, Any]:
+            """Read local friend-request records, newest first. Default 20; 0/null reads all; offset pages records. Native status is reported; unknown status is not assumed pending."""
+            return backend.list_friend_requests(limit, offset)
+
+        @server.tool(annotations=group_read)
+        def search_new_contact(query: str) -> dict[str, Any]:
+            """Search the exact user-provided WeChat identifier through the native client. This does not send a friend request; verification credentials stay internal."""
+            return backend.search_new_contact(query)
+
+        @server.tool(annotations=group_write)
+        def add_friend(query: str, idempotency_key: str, greeting: str = '', remark: str = '') -> dict[str, Any]:
+            """Search the user-specified WeChat identifier through the client, then submit a friend request with its real verification credentials. Client success confirms this operation; it does not prove the recipient accepted. Preserve the key after timeout."""
+            return backend.add_friend(query, idempotency_key, greeting, remark)
+
+        @server.tool(annotations=group_write)
+        def accept_friend_request(request_id: str, idempotency_key: str,
+                                  remark: str | None = None) -> dict[str, Any]:
+            """Accept the user-selected request from list_friend_requests, using its current native ticket and scene. None preserves the record's remark; empty text clears it. Client success is sufficient; unknown is never replayed."""
+            return backend.accept_friend_request(request_id, idempotency_key, remark)
+
+        @server.tool(annotations=group_write)
+        def set_contact_remark(contact_id: str, remark: str, idempotency_key: str) -> dict[str, Any]:
+            """Set the user-requested friend remark; empty text clears it. Client success is sufficient. Preserve the original key and value after timeout; unknown is never resubmitted."""
+            return backend.set_contact_remark(contact_id, remark, idempotency_key)
+
         @server.tool(annotations=group_destructive)
         def remove_group_members(group_id: str, member_ids: list[str], idempotency_key: str) -> dict[str, Any]:
             """Remove the user-specified members from a group through WeChat. Requires this account to be owner/admin after a native role refresh. Resolve names to actual member IDs first. Client success is sufficient; preserve the key after timeout and never replay unknown."""
@@ -141,7 +173,7 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
 
         @server.tool(annotations=group_read)
         def get_group_members(group_id: str, refresh: bool = True) -> dict[str, Any]:
-            """Read all native group member IDs, owner/admin roles and this account's role. Refreshes by default; false selects local cache. Full member profiles/nicknames are not yet returned."""
+            """Read all group members, roles, nicknames and available contact profiles. Refresh controls the native member list; profiles come from local contact records. Inspect profiles_status and missing records."""
             return backend.get_group_members(group_id, refresh)
 
         @server.tool(annotations=group_read)

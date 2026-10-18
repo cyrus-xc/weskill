@@ -68,7 +68,9 @@ function groupMembers(groupId,refresh) {
     const id=groupReadString(node.add(0x10));
     const detail=node.add(0x28).readPointer();
     const flags=detail.isNull()?null:detail.add(0x20).readU32();
-    members.push({member_id:id,is_owner:id===owner,is_admin:admins.has(id),
+    // The client's member-display getter (7587958) reads this proto string.
+    const groupNickname=detail.isNull()?'':groupReadString(detail.add(0x10).readPointer());
+    members.push({member_id:id,group_nickname:groupNickname,is_owner:id===owner,is_admin:admins.has(id),
       role:id===owner?'owner':admins.has(id)?'admin':'member',native_member_flag:flags});
     node=node.readPointer();
   }

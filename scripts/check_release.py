@@ -57,11 +57,11 @@ def main():
     for host in ('codex', 'claude'):
         manifest = plugin / f'.{host}-plugin/plugin.json'
         value = json.loads(manifest.read_text())
-        if value.get('name') != 'weskill' or value.get('version') != '0.2.1':
+        if value.get('name') != 'weskill' or value.get('version') != '0.3.0':
             errors.append(f'{manifest.relative_to(ROOT)}: inconsistent plugin identity')
     required = [ROOT / '.agents/plugins/marketplace.json',
                 ROOT / '.claude-plugin/marketplace.json',
-                plugin / 'skills/weskill/SKILL.md', plugin / 'skills/weskill-group/SKILL.md', plugin / 'LICENSE',
+                plugin / 'skills/weskill/SKILL.md', plugin / 'skills/weskill-group/SKILL.md', plugin / 'skills/weskill-friends/SKILL.md', plugin / 'LICENSE',
                 plugin / 'assets/logo.svg', plugin / 'skills/weskill/assets/logo.svg']
     for path in required:
         if not path.is_file():

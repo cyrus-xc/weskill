@@ -1,13 +1,13 @@
 {
   "name": "weskill",
-  "version": "0.2.1",
-  "description": "Linux WeChat toolbox: weskill entry skill, weskill-group administration skill, and a shared local native MCP.",
+  "version": "0.3.0",
+  "description": "Linux WeChat toolbox: entry, group and friend management skills backed by a shared local native MCP.",
   "license": "MIT",
   "skills": "./skills/",
   "interface": {
     "displayName": "weskill",
-    "shortDescription": "微信 Skill 工具箱：消息、媒体与群管理",
-    "longDescription": "weskill 作为总入口编排搜索、历史、文本与本地媒体发送；weskill-group 负责群成员、建群、邀请、踢人、真实@、公告、置顶与邀请确认。两者复用本机原生 MCP 与共享服务；当前适配指定 Linux ARM64 微信构建。",
+    "shortDescription": "微信 Skill 工具箱：消息、好友与群管理",
+    "longDescription": "weskill 提供总入口，weskill-group 处理群管理，weskill-friends 处理好友资料、备注与申请；共用本机原生 MCP 与一小时空闲退出服务。资料、备注、搜索与申请记录已验证，真实添加和接受仍待验证；当前适配指定 Linux ARM64 微信构建。",
     "category": "Productivity",
     "brandColor": "#35C7AE",
     "logo": "./assets/logo.png",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "weskill 好友管理"
+  short_description: "通过本机微信查询好友资料、修改备注并检查和接受好友申请"
+  default_prompt: "使用 $weskill-friends 查看当前可用的好友管理能力。"

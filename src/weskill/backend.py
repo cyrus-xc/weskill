@@ -192,7 +192,9 @@ class ExperimentalBackend:
         try:
             session = self._ensure_session()
             asset = {'search': 'contact_query_agent.js', 'messages': 'message_list_agent.js',
-                     'send': 'send_text_agent.js', 'media': 'media_send_agent.js', 'group': 'group_agent.js', 'mention': 'mention_agent.js'}[mode]
+                     'send': 'send_text_agent.js', 'media': 'media_send_agent.js', 'group': 'group_agent.js', 'mention': 'mention_agent.js',
+                     'friend_profile': 'friend_profile_agent.js', 'friend_remark': 'friend_remark_agent.js',
+                     'friend_request': 'friend_request_agent.js'}[mode]
             assets = files('weskill').joinpath('assets')
             source = assets.joinpath(asset).read_text() + '\n' + assets.joinpath('executor_bridge.js').read_text()
             script = session.create_script(source)
@@ -211,7 +213,7 @@ class ExperimentalBackend:
             if len(noops) != 1 or noops[0].get('tid') != int(noop['tid']):
                 raise RuntimeError('Executor TID evidence differs')
             tid = int(noop['tid'])
-            if mode in ('search', 'messages', 'media', 'group'):
+            if mode in ('search', 'messages', 'media', 'group', 'friend_profile', 'friend_remark', 'friend_request'):
                 task = self._rpc(script, 'prepare', tid, parameters)
             elif mode == 'mention':
                 task = self._rpc(script, 'prepare', tid, parameters['group_id'], parameters['text'],
@@ -238,7 +240,9 @@ class ExperimentalBackend:
             response['agent_state'] = state
             with event_lock:
                 kind = {'search': 'contact_query_result', 'messages': 'message_list_result',
-                        'send': 'text_send_result', 'media': 'media_send_result', 'group': 'group_result', 'mention': 'text_send_result'}[mode]
+                        'send': 'text_send_result', 'media': 'media_send_result', 'group': 'group_result', 'mention': 'text_send_result',
+                        'friend_profile': 'friend_profile_result', 'friend_remark': 'friend_remark_result',
+                        'friend_request': 'friend_request_result'}[mode]
                 payloads = [m.get('payload', {}) for m in events if m.get('type') == 'send'
                             and m.get('payload', {}).get('kind') == kind]
             healthy = (state and state.get('invoked') and state.get('completed')
@@ -253,7 +257,10 @@ class ExperimentalBackend:
                                  else payload.get('result'))
                 response['result'] = self._string_message_ids(native_result)
                 response['errors'] = [payload['error']] if payload.get('error') else []
-                if isinstance(native_result, dict) and native_result.get('submission_unknown'):
+                if isinstance(native_result, dict) and native_result.get('not_submitted') is True:
+                    response['status'] = 'not_submitted'
+                    response['errors'] = [native_result.get('error_message', 'Native operation was not submitted')]
+                elif isinstance(native_result, dict) and native_result.get('submission_unknown'):
                     response['status'] = 'unknown'
                     response['errors'] = [native_result.get('error_message', 'Native completion not established')]
                 elif (not payload.get('error') and isinstance(native_result, dict)
@@ -472,11 +479,81 @@ class ExperimentalBackend:
             _save_private(ledger, record)
             return response
 
+    def get_friend_info(self, contact_ids: list[str]) -> dict:
+        self._validate_member_ids(contact_ids)
+        with self._lock, self._ledger_lock():
+            return self._run('friend_profile', {'contact_ids': contact_ids})
+
+    def list_friend_requests(self, limit: int | None = 20, offset: int = 0) -> dict:
+        if not valid_limit(limit) or type(offset) is not int or offset < 0:
+            raise ValueError('Expected a nonnegative offset and limit (0/null reads all)')
+        with self._lock, self._ledger_lock():
+            return self._run('friend_request', {'operation': 'list_friend_requests',
+                'limit': limit, 'offset': offset})
+
+    def search_new_contact(self, query: str) -> dict:
+        if not valid_chat_id(query):
+            raise ValueError('Expected a nonempty WeChat search identifier')
+        query.encode('utf-8')
+        with self._lock, self._ledger_lock():
+            return self._run('friend_request', {'operation': 'search_new_contact', 'query': query})
+
+    def add_friend(self, query: str, idempotency_key: str, greeting: str = '', remark: str = '') -> dict:
+        if not valid_chat_id(query):
+            raise ValueError('Expected a nonempty WeChat search identifier')
+        for text in (query, greeting, remark):
+            if not isinstance(text, str) or '\0' in text:
+                raise ValueError('Expected text without NUL')
+            text.encode('utf-8')
+        return self._operation_write('friend_request', {'operation': 'add_friend',
+            'query': query, 'greeting': greeting, 'remark': remark}, idempotency_key)
+
+    def accept_friend_request(self, request_id: str, idempotency_key: str,
+                              remark: str | None = None) -> dict:
+        if not valid_chat_id(request_id):
+            raise ValueError('Expected an actual friend-request ID from list_friend_requests')
+        request_id.encode('utf-8')
+        if remark is not None:
+            if not isinstance(remark, str) or '\0' in remark:
+                raise ValueError('Expected a remark without NUL')
+            remark.encode('utf-8')
+        return self._operation_write('friend_request', {'operation': 'accept_friend_request',
+            'request_id': request_id, 'remark': remark}, idempotency_key)
+
+    def set_contact_remark(self, contact_id: str, remark: str, idempotency_key: str) -> dict:
+        self._validate_member_ids([contact_id])
+        if not isinstance(remark, str) or '\0' in remark:
+            raise ValueError('Expected a remark without NUL')
+        remark.encode('utf-8')
+        return self._operation_write('friend_remark', {'operation': 'set_contact_remark',
+            'contact_id': contact_id, 'remark': remark}, idempotency_key)
+
     def get_group_members(self, group_id: str, refresh: bool = True) -> dict:
         self._validate_group_id(group_id)
         if type(refresh) is not bool:
             raise ValueError('Expected a boolean refresh')
-        return self._group_read({'operation': 'get_group_members', 'group_id': group_id, 'refresh': refresh})
+        with self._lock:
+            response = self._group_read({'operation': 'get_group_members', 'group_id': group_id, 'refresh': refresh})
+            result = response.get('result') or {}
+            members = result.get('members') or []
+            if response.get('status') != 'client_success' or not members:
+                return response
+            profiles = self.get_friend_info([member['member_id'] for member in members])
+            by_id = {p['contact_id']: p for p in (profiles.get('result') or {}).get('contacts', [])}
+            result = dict(result, profiles_status=profiles.get('status'), profiles_errors=profiles.get('errors', []))
+            result['members'] = []
+            for original in members:
+                member = dict(original)
+                profile = by_id.get(member['member_id'])
+                member['profile'] = profile
+                if profile is not None:
+                    for field in ('nickname', 'remark', 'alias', 'avatar_url'):
+                        if field in profile:
+                            member[field] = profile[field]
+                member['display_name'] = (member.get('group_nickname') or member.get('remark') or
+                                          member.get('nickname') or member['member_id'])
+                result['members'].append(member)
+            return dict(response, result=result)
 
     def get_group_info(self, group_id: str, refresh: bool = True) -> dict:
         self._validate_group_id(group_id)
@@ -523,20 +600,23 @@ class ExperimentalBackend:
                                   'member_ids': member_ids}, idempotency_key)
 
     def _group_write(self, parameters, idempotency_key):
+        return self._operation_write('group', parameters, idempotency_key)
+
+    def _operation_write(self, native_mode, parameters, idempotency_key):
         if not isinstance(idempotency_key, str) or not idempotency_key:
             raise ValueError('A nonempty idempotency key is required')
         ledger = self.state_dir / ('send-' + hashlib.sha256(idempotency_key.encode()).hexdigest() + '.json')
         with self._lock, self._ledger_lock():
             if ledger.exists():
                 old = json.loads(ledger.read_text())
-                if old.get('kind') != 'group' or old.get('parameters') != parameters:
+                if old.get('kind') != native_mode or old.get('parameters') != parameters:
                     raise ValueError('Idempotency key already belongs to a different operation')
                 if old['response']['status'] != 'not_submitted':
                     return old['response']
             response = {'status': 'unknown', 'result': None, 'delivery_confirmed': False,
                         'idempotency_key': idempotency_key, 'retry_allowed': False, 'errors': []}
-            record = {'kind': 'group', 'parameters': parameters, 'response': response}
-            if parameters['operation'] == 'remove_group_members':
+            record = {'kind': native_mode, 'parameters': parameters, 'response': response}
+            if native_mode == 'group' and parameters['operation'] == 'remove_group_members':
                 try:
                     membership = self._run('group', {'operation': 'get_group_members',
                         'group_id': parameters['group_id'], 'refresh': True})
@@ -559,7 +639,7 @@ class ExperimentalBackend:
             _save_private(ledger, record)
             try:
                 response.update(self._run('mention' if parameters['operation'] == 'send_group_mention'
-                                          else 'group', parameters))
+                                          else native_mode, parameters))
             except Exception as error:
                 response['errors'].append(f'{type(error).__name__}: {error}')
             response['retry_allowed'] = response['status'] == 'not_submitted'

@@ -141,6 +141,27 @@ class ServiceBackend:
         return self._call('send_file', {'recipient': recipient_id, 'file_path': str(file_path),
                                         'idempotency_key': idempotency_key})
 
+    def get_friend_info(self, contact_ids):
+        return self._call('get_friend_info', {'contact_ids': contact_ids})
+
+    def list_friend_requests(self, limit=20, offset=0):
+        return self._call('list_friend_requests', {'limit': limit, 'offset': offset})
+
+    def search_new_contact(self, query):
+        return self._call('search_new_contact', {'query': query})
+
+    def add_friend(self, query, idempotency_key, greeting='', remark=''):
+        return self._call('add_friend', {'query': query, 'idempotency_key': idempotency_key,
+                                       'greeting': greeting, 'remark': remark})
+
+    def accept_friend_request(self, request_id, idempotency_key, remark=None):
+        return self._call('accept_friend_request', {'request_id': request_id,
+            'idempotency_key': idempotency_key, 'remark': remark})
+
+    def set_contact_remark(self, contact_id, remark, idempotency_key):
+        return self._call('set_contact_remark', {'contact_id': contact_id, 'remark': remark,
+                                              'idempotency_key': idempotency_key})
+
     def get_group_members(self, group_id, refresh=True):
         return self._call('get_group_members', {'group_id': group_id, 'refresh': refresh})
 

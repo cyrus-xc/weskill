@@ -27,6 +27,7 @@ _OPERATIONS = (
     ("send_file", "发送文件", "message::send_message"),
     ("send_emoji", "发送普通Unicode表情", None),
     ("send_custom_sticker", "发送自定义表情或GIF", None),
+    ("search_new_contact", "搜索新联系人", None),
     ("add_friend", "主动添加好友", None),
     ("list_friend_requests", "检查好友申请", None),
     ("accept_friend_request", "接受好友申请", None),
@@ -50,8 +51,9 @@ _OPERATIONS = (
 GROUP_VERIFIED = {"get_group_members", "get_group_info", "create_group", "invite_group_members", "remove_group_members",
                   "mention_group_member", "send_group_announcement", "edit_group_announcement",
                   "pin_group_message", "group_invitation_confirmation"}
+FRIEND_VERIFIED = {"get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact"}
 VERIFIED = {"get_messages", "list_contacts", "list_groups", "send_private_text", "send_group_text",
-            "send_image", "send_file"} | GROUP_VERIFIED
+            "send_image", "send_file"} | GROUP_VERIFIED | FRIEND_VERIFIED
 
 
 def capability_report() -> dict[str, Any]:
@@ -77,7 +79,10 @@ def capability_report() -> dict[str, Any]:
                 "evidence": (
                     [{"kind": "native_runtime_verified", "source": "docs/GROUPS.md",
                       "limitation": "Ordinary test groups on the recorded build; invitations do not imply acceptance"}]
-                    if name in GROUP_VERIFIED else [{
+                    if name in GROUP_VERIFIED else
+                    [{"kind": "native_runtime_verified", "source": "docs/FRIENDS.md",
+                      "limitation": "Available local native records on the recorded build; not a remote refresh"}]
+                    if name in FRIEND_VERIFIED else [{
                         "kind": "runtime_registered",
                         "seed": seed,
                         "source": "docs/FEATURES.md",

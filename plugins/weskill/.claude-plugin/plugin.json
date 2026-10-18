@@ -1,7 +1,7 @@
 {
   "name": "weskill",
-  "version": "0.2.1",
-  "description": "Linux WeChat toolbox: weskill entry skill, weskill-group administration skill, and a shared local native MCP.",
+  "version": "0.3.0",
+  "description": "Linux WeChat toolbox: entry, group and friend management skills backed by a shared local native MCP.",
   "license": "MIT",
   "keywords": [
     "wechat",

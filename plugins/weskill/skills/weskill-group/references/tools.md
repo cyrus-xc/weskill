@@ -5,7 +5,7 @@
 ## 群资料与成员
 
 - `get_group_info(group_id, refresh=True)`：读取群资料及已有公告。按返回值说明当前帐号的群角色与邀请确认状态；字段缺失时保留未知。
-- `get_group_members(group_id, refresh=True)`：取得群成员及内部 ID。当前返回成员 ID、群主/管理员角色和本人角色，完整昵称资料尚未返回。用户给出好友名称时先用 `search_contacts` 解析，再与成员 ID 比对；重名时消歧。真实 @ 使用这些 ID。
+- `get_group_members(group_id, refresh=True)`：取得群成员及内部 ID。返回成员 ID、群主/管理员角色、本人角色、群昵称及本地联系人资料；分别保留群昵称、好友昵称和备注，检查 `profiles_status` 与缺失记录。用户给出好友名称时先用 `search_contacts` 解析，再与成员 ID 比对；重名时消歧。真实 @ 使用这些 ID。
 
 群搜索沿用 `search_contacts(groups_only=true)`；普通群消息及历史沿用 `$weskill` 的基础工具，不需要把普通发送改成管理操作。
 

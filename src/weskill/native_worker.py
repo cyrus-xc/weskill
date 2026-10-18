@@ -30,7 +30,7 @@ def main():
                                                    values['filter_type'] == 2, values['sort_by_time'])
             elif mode == 'messages':
                 response = backend._run('messages', values)
-            elif mode in ('send', 'media', 'group', 'mention'):
+            elif mode in ('send', 'media', 'group', 'mention', 'friend_profile', 'friend_remark', 'friend_request'):
                 response = backend._run(mode, values)  # The parent owns the durable send ledger.
             else:
                 raise ValueError('Unsupported native operation')

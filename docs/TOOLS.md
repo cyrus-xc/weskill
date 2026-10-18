@@ -1,6 +1,6 @@
 # MCP 工具参考
 
-默认诊断模式提供 `get_client_identity` 与 `get_capabilities`；显式启用原生后端后增加十四项业务工具和三项服务控制工具。工具以 MCP 会话实际返回的 schema 为准。
+默认诊断模式提供 `get_client_identity` 与 `get_capabilities`；显式启用原生后端后提供服务控制、消息、好友和群管理工具。工具以 MCP 会话实际返回的 schema 为准。
 
 | 工具 | 参数 | 用途 |
 | --- | --- | --- |
@@ -12,7 +12,7 @@
 | `search_contacts` | `keywords: string[]`、`limit=10`、`groups_only=false`、`sort_by_time=false` | 搜索联系人；设 `groups_only=true` 搜索群；条数和排序由调用方选择 |
 | `get_messages` | `chat_ids: string[]`、`limit=20`、`include_xml=false` | 批量会话数量不设上限；正整数指定条数，`0` / `null` 拉全部 |
 | `send_text_message` | `recipient_id: string`、`text: string`、`idempotency_key: string` | 向已确认的目标提交一次文本操作 |
-| `send_image` | `recipient_id`、`file_path`、`idempotency_key` | 发送本机图片；私聊已验证，群媒体尚未实测 |
+| `send_image` | `recipient_id`、`file_path`、`idempotency_key` | 发送本机图片；私聊与普通群已验证 |
 | `send_file` | `recipient_id`、`file_path`、`idempotency_key` | 发送本机文件；无工具箱大小或扩展名白名单 |
 
 `chat_id` 是微信内部会话标识，来自搜索结果。群使用群标识，私聊使用联系人标识；不要由昵称推测 ID。
@@ -82,8 +82,21 @@
 
 `file_path` 使用 MCP 所在主机上的文件路径，推荐绝对路径。先确认用户要发送的文件和目标，再调用 `send_image` 或 `send_file`。两者共享文本发送的幂等键空间；同键绑定操作类型、目标、规范路径和文件 SHA256。内容变化使用新发送任务与新键，`unknown` 不重发。返回 `file_name` 是实际发送名称，原名含 XML 特殊字符或与缓存中不同文件重名时会调整名称。
 
-媒体会复制到活跃微信帐号缓存以供原生发送，缓存保留供客户端后续渲染。工具箱不设置文件大小或扩展名上限；格式和大小能否发送由客户端决定。当前实测为私聊 PNG 与文本文件，其他格式和群媒体尚未逐项验证。
+媒体会复制到活跃微信帐号缓存以供原生发送，缓存保留供客户端后续渲染。工具箱不设置文件大小或扩展名上限；格式和大小能否发送由客户端决定。当前实测为私聊与普通群的 PNG、文本文件，其他格式尚未逐项验证。
 
 ## 群管理工具
 
-原生模式另提供 `get_group_members`、`get_group_info`、`create_group`、`invite_group_members`、`remove_group_members`、`send_group_mention`、`set_group_announcement`、`pin_group_message`、`set_group_invitation_confirmation`。参数、字段来源及真实验证范围见 [群管理说明](GROUPS.md)。总计 19 个工具，默认诊断模式仍为 2 个。
+原生模式另提供 `get_group_members`、`get_group_info`、`create_group`、`invite_group_members`、`remove_group_members`、`send_group_mention`、`set_group_announcement`、`pin_group_message`、`set_group_invitation_confirmation`。参数、字段来源及真实验证范围见 [群管理说明](GROUPS.md)。当前开发版本共 25 个工具，默认诊断模式仍为 2 个。
+
+## 好友管理
+
+| 工具 | 参数 | 用途 |
+| --- | --- | --- |
+| `get_friend_info` | `contact_ids: string[]` | 读取可用本地完整联系人记录，不请求远端刷新 |
+| `set_contact_remark` | `contact_id, remark, idempotency_key` | 设置备注；空字符串清除 |
+| `list_friend_requests` | `limit=20, offset=0` | 读取申请记录；0/null为全部；原生状态缺失时保留未知 |
+| `search_new_contact` | `query` | 通过微信原生通道搜索指定微信号等标识，不提交申请 |
+| `add_friend` | `query, idempotency_key, greeting="", remark=""` | 原生搜索后以真实验证凭据提交申请 |
+| `accept_friend_request` | `request_id, idempotency_key, remark=null` | 使用所选申请的原生凭据接受；null保留其备注 |
+
+搜索新联系人、主动添加及接受申请的开发验证进度见 [好友管理说明](FRIENDS.md)。工具列表包含开发中的原生接口；以能力报告的验证状态判断已通过的范围。

@@ -1,6 +1,6 @@
 ---
 name: weskill
-description: "Orchestrate local Linux WeChat tasks: find contacts or groups, read selected chat history, and send user-authorized text, local images or files through the weskill MCP. Route group administration to the companion weskill-group skill; discover live capabilities before acting."
+description: "Orchestrate local Linux WeChat tasks: find contacts or groups, read selected chat history, and send user-authorized text, local images or files through the weskill MCP. Route friend and group administration to the companion skills; discover live capabilities before acting."
 ---
 
 # weskill
@@ -14,19 +14,20 @@ description: "Orchestrate local Linux WeChat tasks: find contacts or groups, rea
 | 连接、能力和服务 | `get_client_identity`、`get_capabilities`、`ensure_service`、`get_service_status`、`stop_service` |
 | 搜索与历史 | `search_contacts`、`get_messages`；由本入口直接处理 |
 | 日常发送 | `send_text_message`、`send_image`、`send_file`；由本入口直接处理 |
+| 好友资料、备注与申请 | 读取同插件的 [weskill-friends](../weskill-friends/SKILL.md)，按实时工具处理 |
 | 群成员与资料 | `get_group_members`、`get_group_info` |
 | 建群与邀请 | `create_group`、`invite_group_members` |
 | 踢出群成员 | `remove_group_members` |
 | 真实提及与公告 | `send_group_mention`、`set_group_announcement` |
 | 群置顶与邀请确认 | `pin_group_message`、`set_group_invitation_confirmation` |
 
-群管理任务读取同插件的 [weskill-group](../weskill-group/SKILL.md)，按其对应流程执行；两者共用已有 MCP 和服务。目录覆盖已实现工具，执行可用性以实时 `get_capabilities` 为准。好友申请、朋友圈等未开放项如实说明缺口。
+群管理任务读取同插件的 [weskill-group](../weskill-group/SKILL.md)，按其对应流程执行；两者共用已有 MCP 和服务。目录覆盖已实现工具，执行可用性以实时 `get_capabilities` 为准。好友管理读取同插件的 [weskill-friends](../weskill-friends/SKILL.md)；朋友圈等未开放项如实说明缺口。
 
 ## 确定可用能力与目标
 
 开始微信任务时先调用 `get_capabilities`，再用 `ensure_service` 确保本机共享服务运行。请求会自动续期，最后一次请求完成后一小时空闲会退出；正常操作无需反复检查进程。需要核对客户端构建时调用 `get_client_identity`。默认诊断模式只有这两个工具。业务工具缺失时，报告需要启用本机原生模式；安装与连接问题读取 [连接说明](references/setup.md)。
 
-按用户给出的名字调用 `search_contacts`，用 `groups_only=true` 搜索群，`false` 搜索私聊联系人。使用结果中的 `chat_id`，不由名称猜 ID。核对用户指定的目标；重名或结果不确定时先消歧。搜索有上限，零结果不证明整个帐号中不存在该会话。
+按用户给出的名字调用 `search_contacts`，用 `groups_only=true` 搜索群，`false` 搜索私聊联系人。使用结果中的 `chat_id`，不由名称猜 ID。核对用户指定的目标；重名或结果不确定时先消歧。搜索结果受查询条数和微信匹配规则影响，零结果不证明整个帐号中不存在该会话。
 
 ## 控制服务
 
@@ -50,10 +51,10 @@ description: "Orchestrate local Linux WeChat tasks: find contacts or groups, rea
 
 ## 发送本地图片和文件
 
-目标和文件已明确时，调用 `send_image` 或 `send_file`，传入本机文件路径与唯一幂等键。两种媒体共用文本的成功状态和重试语义；同键绑定操作类型、目标、文件路径与字节。当前私聊 PNG 与文本文件已实测，群媒体和其他格式尚未逐项验证。文件名含 XML 特殊字符或发生缓存冲突时，按返回的 `file_name` 报告实际名称。详细参数见 [工具约定](references/tools.md#本地媒体)。
+目标和文件已明确时，调用 `send_image` 或 `send_file`，传入本机文件路径与唯一幂等键。两种媒体共用文本的成功状态和重试语义；同键绑定操作类型、目标、文件路径与字节。当前私聊与普通群的 PNG、文本文件已实测，其他格式尚未逐项验证。文件名含 XML 特殊字符或发生缓存冲突时，按返回的 `file_name` 报告实际名称。详细参数见 [工具约定](references/tools.md#本地媒体)。
 
 ## 尚未开放的功能
 
-以实时能力报告为准。目前自定义表情、朋友圈和好友管理未开放；群管理按能力目录路由。告知缺口，保留用户任务；不要用文本“@名字”冒充提及，也不要把内部注册线索当作可执行工具。
+以实时能力报告为准。目前自定义表情和朋友圈未开放；好友与群管理按能力目录路由。告知缺口，保留用户任务；不要用文本“@名字”冒充提及，也不要把内部注册线索当作可执行工具。
 
 原生失败时汇总具体错误。切换 UI 自动化前说明原因并取得用户对方案的同意；微信重启、进程终止或新库加载不作为默认恢复步骤。

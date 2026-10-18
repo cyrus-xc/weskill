@@ -101,7 +101,7 @@ class Handler(socketserver.StreamRequestHandler):
                 with server.state_lock:
                     result = server.snapshot()
             elif method != 'stop':
-                if method not in {'search_contacts', 'get_messages', 'send_text', 'send_image', 'send_file', 'get_group_members', 'get_group_info', 'create_group', 'invite_group_members', 'remove_group_members', 'preview_group_announcement', 'set_group_announcement', 'send_group_mention', 'preview_group_pin', 'pin_group_message', 'set_group_invitation_confirmation'}:
+                if method not in {'search_contacts', 'get_messages', 'get_friend_info', 'list_friend_requests', 'search_new_contact', 'add_friend', 'accept_friend_request', 'set_contact_remark', 'send_text', 'send_image', 'send_file', 'get_group_members', 'get_group_info', 'create_group', 'invite_group_members', 'remove_group_members', 'preview_group_announcement', 'set_group_announcement', 'send_group_mention', 'preview_group_pin', 'pin_group_message', 'set_group_invitation_confirmation'}:
                     raise ValueError('Unsupported local service method')
                 result = getattr(server.backend, method)(**request['arguments'])
             response = {'result': result}
