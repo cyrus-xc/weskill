@@ -1,0 +1,7 @@
+interface:
+  display_name: "weskill 群管理"
+  short_description: "Manage Linux WeChat groups through the local MCP"
+  default_prompt: "使用 $weskill-group 查询指定微信群的成员和群资料，并按我的要求完成当前可用的群操作。"
+  icon_small: "./assets/logo.png"
+  icon_large: "./assets/logo.svg"
+  brand_color: "#35C7AE"

@@ -4,7 +4,7 @@
 
 本机环境：Python 3.12+、GCC、已登录的 Linux 原生微信；当前只验证 ARM64 4.1.13.26 的指定文件哈希。MCP 须能访问宿主微信进程。容器中看不到进程时需要在宿主运行服务。
 
-完成源码安装和原生库编译后，在仓库根目录复制 `examples/local-targets.example.json` 为私有 `.state/local-targets.json`，初始白名单为空。已有文件保留并编辑。白名单字段为 `allowed_recipients`，存储从搜索结果确认的内部 ID；修改配置后重启 MCP，保留发送记录。
+完成源码安装和原生库编译后即可注册 MCP，无需创建联系人配置文件。通过搜索结果确定目标内部 ID，再查询消息或执行用户授权的发送；更换目标无需重启服务。保留 `.state/operations/` 中的发送记录。
 
 Codex 注册方式：
 
@@ -22,4 +22,4 @@ claude mcp add --transport stdio --scope user weskill -- \
 
 连接后应发现八个工具，包括 `ensure_service`、`get_service_status` 和 `stop_service`。仅两个工具表示当前是默认诊断模式。微信重启后停止旧服务再启动；MCP 升级后先停止旧服务再重新连接。出现构建身份不符时停止原生调用，需要开发适配，不能绕过校验。
 
-配置修改仅限用户要求的微信服务与目标。诊断输出、帐号信息和原始聊天结果保存在私有位置。
+诊断输出、帐号信息和原始聊天结果保存在私有位置。

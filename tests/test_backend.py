@@ -1,4 +1,4 @@
-"""Stand-in ledger and authorization tests, never native integration tests."""
+"""Stand-in ledger and input validation tests, never native integration tests."""
 import json
 import multiprocessing
 from pathlib import Path
@@ -14,7 +14,7 @@ GROUP = '12345678@chatroom'
 
 class StandinBackend(ExperimentalBackend):
     def __init__(self, directory, outcome=None):
-        super().__init__(123, '/nonexistent/standin.so', directory, [CONTACT, GROUP])
+        super().__init__(123, '/nonexistent/standin.so', directory)
         self.calls = []
         self.outcome = outcome or {'status': 'client_success', 'result': {'success': True},
                                    'delivery_confirmed': False, 'errors': []}
@@ -37,10 +37,21 @@ class BackendLedgerTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.directory = Path(self.tmp.name)
 
-    def test_allowlist_rejects_before_ledger_or_side_effects(self):
+    def test_new_contacts_and_groups_work_without_registration(self):
         backend = StandinBackend(self.directory)
-        with self.assertRaises(PermissionError):
-            backend.send_text('wxid_unapproved', 'test', 'one')
+        for index, recipient in enumerate(['wxid_new_contact', '98765432@chatroom']):
+            sent = backend.send_text(recipient, 'fixture', f'new-target-{index}')
+            self.assertEqual(sent['status'], 'client_success')
+            read = backend.get_messages([recipient], 1)
+            self.assertEqual(read['status'], 'client_success')
+        self.assertEqual([mode for mode, _ in backend.calls],
+                         ['send', 'messages', 'send', 'messages'])
+
+    def test_invalid_recipient_rejects_before_ledger_or_side_effects(self):
+        backend = StandinBackend(self.directory)
+        for recipient in [None, [], '', '  ', 'wxid_bad\0']:
+            with self.assertRaises(ValueError):
+                backend.send_text(recipient, 'test', 'invalid-target')
         self.assertEqual(backend.calls, [])
         self.assertEqual(list(self.directory.glob('send-*.json')), [])
 
@@ -81,13 +92,16 @@ class BackendLedgerTests(unittest.TestCase):
         self.assertEqual(result['status'], 'unknown')
         self.assertEqual(recovered.calls, [])
 
-    def test_not_submitted_is_recorded_and_never_automatically_retried(self):
+    def test_not_submitted_can_be_explicitly_retried_without_changing_key(self):
         backend = StandinBackend(self.directory, {'status': 'not_submitted', 'result': None,
             'delivery_confirmed': False, 'errors': ['attach cancelled']})
         first = backend.send_text(CONTACT, 'text', 'attach-failed')
-        self.assertEqual(backend.send_text(CONTACT, 'text', 'attach-failed'), first)
         self.assertEqual(first['status'], 'not_submitted')
-        self.assertEqual(len(backend.calls), 1)
+        backend.outcome = {'status': 'client_success', 'result': {'success': True}}
+        second = backend.send_text(CONTACT, 'text', 'attach-failed')
+        self.assertEqual(second['status'], 'client_success')
+        self.assertEqual(backend.send_text(CONTACT, 'text', 'attach-failed'), second)
+        self.assertEqual(len(backend.calls), 2)
 
     def test_shared_ledger_serializes_independent_backend_instances(self):
         first = StandinBackend(self.directory)
@@ -145,32 +159,64 @@ class BackendLedgerTests(unittest.TestCase):
             recovered.send_text(CONTACT, 'text', 'corrupt')
         self.assertEqual(recovered.calls, [])
 
-    def test_search_bounds_and_group_scope_are_explicit(self):
+    def test_search_has_no_artificial_count_or_keyword_caps(self):
         backend = StandinBackend(self.directory)
         backend.search_contacts(['测试群'], limit=5, groups_only=True)
         self.assertEqual(backend.calls[0][1]['filter_type'], 2)
-        for keywords, limit in [([], 5), (['x'], 51), ([''], 5), (['x'], True)]:
+        backend.search_contacts(['x' * 1000] * 12, limit=500, sort_by_time=True)
+        self.assertEqual(backend.calls[-1][1]['limit'], 500)
+        self.assertTrue(backend.calls[-1][1]['sort_by_time'])
+        for keywords, limit in [([None], 5), (['x'], -1), (['x'], True), ('x', 5)]:
             with self.assertRaises(ValueError):
                 backend.search_contacts(keywords, limit)
-        self.assertEqual(len(backend.calls), 1)
+        self.assertEqual(len(backend.calls), 2)
 
-    def test_message_query_is_bounded_and_never_requests_xml(self):
+    def test_message_query_defaults_and_caller_selected_options(self):
         backend = StandinBackend(self.directory)
         backend.get_messages([CONTACT, GROUP], limit=2)
         self.assertEqual(backend.calls, [('messages', {
             'chat_ids': [CONTACT, GROUP], 'limit': 2, 'include_xml': False})])
         self.assertEqual(list(self.directory.glob('send-*.json')), [])
 
-    def test_message_query_rejects_unbounded_or_unauthorized_input(self):
+    def test_history_defaults_20_accepts_all_and_large_counts_and_batch(self):
         backend = StandinBackend(self.directory)
-        for ids, limit in [([], 2), ([CONTACT] * 9, 2), ([CONTACT], 21),
-                           ([CONTACT], 0), ([CONTACT], True), ('fixture', 2),
-                           (['filehelper'], 2), ([None], 2)]:
+        backend.get_messages(['filehelper'])
+        self.assertEqual(backend.calls[-1][1]['limit'], 20)
+        for limit in [500, 0, None]:
+            backend.get_messages(['legacy_username'] * 12, limit, include_xml=True)
+            self.assertEqual(backend.calls[-1][1]['limit'], 200)
+            self.assertEqual(len(backend.calls[-1][1]['chat_ids']), 1)
+            self.assertTrue(backend.calls[-1][1]['include_xml'])
+
+    def test_message_query_rejects_invalid_input(self):
+        backend = StandinBackend(self.directory)
+        for ids, limit in [([], 2), ([CONTACT], -1), ([CONTACT], True),
+                           ('fixture', 2), ([None], 2), (['bad\0id'], 2)]:
             with self.assertRaises(ValueError):
                 backend.get_messages(ids, limit)
-        with self.assertRaises(PermissionError):
-            backend.get_messages(['wxid_unapproved'], 2)
         self.assertEqual(backend.calls, [])
+
+    def test_all_history_pages_include_dense_timestamp_boundaries(self):
+        class PagedBackend(ExperimentalBackend):
+            def __init__(self, directory):
+                super().__init__(123, '/nonexistent/fixture.so', directory)
+                self.rows = [{'svr_id': i, 'create_time': 1000 + i // 500,
+                              'content': 'repeated', 'sender_id': 'fixture'} for i in range(1300)]
+                self.limits = []
+
+            def _run(self, mode, parameters):
+                self.limits.append(parameters['limit'])
+                rows = [row for row in self.rows
+                        if row['create_time'] <= parameters.get('end_time', 99999)]
+                return {'status': 'client_success', 'result': {'success': True,
+                    'sessions': [{'chat_id': 'fixture', 'messages': rows[-parameters['limit']:]}]}}
+
+        backend = PagedBackend(self.directory)
+        all_rows = backend.get_messages(['fixture'], None)['result']['sessions'][0]['messages']
+        self.assertEqual([int(row['svr_id']) for row in all_rows], list(range(1300)))
+        self.assertIn(400, backend.limits)  # Dense seconds are expanded without gaps.
+        selected = backend.get_messages(['fixture'], 450)['result']['sessions'][0]['messages']
+        self.assertEqual([int(row['svr_id']) for row in selected], list(range(850, 1300)))
 
     def test_large_server_message_id_survives_json_for_javascript_clients(self):
         server_id = 18446744073709551601
@@ -184,10 +230,17 @@ class BackendLedgerTests(unittest.TestCase):
 
     def test_text_bounds_reject_before_side_effects(self):
         backend = StandinBackend(self.directory)
-        for text in ['  ', 'NUL\0', '\ud800', '😀' * 2049]:
+        for text in ['  ', 'NUL\0', '\ud800']:
             with self.assertRaises(ValueError):
                 backend.send_text(CONTACT, text, 'invalid')
         self.assertEqual(backend.calls, [])
+    def test_long_text_legacy_ids_and_long_idempotency_keys_are_accepted(self):
+        backend = StandinBackend(self.directory)
+        response = backend.send_text('filehelper', '😀' * 10000, 'k' * 1000)
+        self.assertEqual(response['status'], 'client_success')
+        self.assertEqual(len(backend.calls), 1)
+        self.assertEqual(backend.calls[0][0], 'send')  # No history verification.
+
 
 
 if __name__ == '__main__':

@@ -13,9 +13,9 @@
   <img alt="Transport: MCP stdio" src="https://img.shields.io/badge/MCP-stdio-192d38">
 </p>
 
-weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 Claude Code 根据自然语言完成一系列微信任务。项目以一个微信操作 Skill 为入口：它负责理解任务、确定联系人或群、组织调用与解释结果；我们开发的本机 MCP 负责查询和执行，其他兼容 MCP 的助手也可直接接入执行层。
+weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 Claude Code 根据自然语言完成一系列微信任务。项目以 `$weskill` 为总入口，配套独立的 `$weskill-group` 群管理 Skill：它负责理解任务、确定联系人或群、组织调用与解释结果；我们开发的本机 MCP 负责查询和执行，其他兼容 MCP 的助手也可直接接入执行层。
 
-**能力范围**覆盖联系人、私聊与群聊、消息与媒体、群管理、朋友圈和界面辅助。当前已实现联系人/群搜索、有界历史消息查询、私聊与群聊文本发送，以及共享服务管理和持久幂等去重。图片、文件、表情、好友申请、好友备注、群成员、建群/邀请、群置顶、公告、入群确认、真实 @、朋友圈与截图仍在研究或计划中，详见下方功能进度。
+**能力范围**覆盖联系人、私聊与群聊、消息与媒体、群管理、朋友圈和界面辅助。当前已实现联系人/群搜索、历史消息查询、私聊与群聊文本发送、本地图片和文件发送，以及群成员、建群与邀请、踢出群成员、真实 @、群公告、消息置顶、邀请确认、共享服务管理和持久幂等去重。表情、好友申请、好友备注、朋友圈与截图仍在研究或计划中，详见下方功能进度。
 
 项目采用 [REA（Reverse Engineer Anything）](https://github.com/morluto/rea) 仓库的 `reverse-engineer-anything` 工作流组织 Linux 微信逆向研究，结合 ELF 静态分析与 Frida 动态验证，寻找可复用的原生调用入口，再将验证通过的能力接入 MCP 与 Skill。目标是在执行微信任务时保持桌面可正常使用：当前业务调用无需移动鼠标、模拟按键或切换窗口焦点。
 
@@ -26,7 +26,7 @@ weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 C
 - **一个入口，组织多步任务。** Skill 将“找到会话、读取所需消息、发送指定文本”等步骤串起来，并处理重名与结果不确定的情况。
 - **Skill 与执行层一起交付。** 同一份 Skill 服务于 Codex / Claude Code，配套 MCP 暴露当前真正可用的原生操作。
 - **桌面继续由你使用。** 当前原生调用不依赖屏幕位置，也不占用输入焦点。
-- **每次发送都有边界。** 目标白名单、持久幂等记录与明确的返回状态，帮助避免误发和重复发送。
+- **每次发送都有边界。** 明确的用户发送意图、持久幂等记录与返回状态，帮助避免误发和重复发送。
 - **能力如实报告。** `get_capabilities` 区分可用能力和开发计划，Skill 按实际能力完成任务。
 
 ```text
@@ -38,14 +38,14 @@ weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 C
                weskill MCP（本机 stdio）
              版本校验 → 原生 executor → 微信
                        ↓
-               查询结果 / 客户端回执
+               查询结果 / 客户端返回状态
 ```
 
 ## Skill 如何组织微信操作
 
-当前提供一个 `$weskill` Skill，按任务编排现有工具。例如，“查找测试群并查看最近 5 条消息”会先确认可用能力、启动或复用共享服务，再搜索目标并读取指定范围；发送任务还会检查用户意图、目标与正文，并保留幂等键。
+`$weskill` 是总入口，维护完整能力目录并处理搜索、历史和普通文本/媒体发送；群管理任务由同插件的 `$weskill-group` 处理。两者复用同一个 MCP 与常驻服务。例如，“查找测试群并查看最近 5 条消息”会先确认可用能力、启动或复用共享服务，再搜索目标并读取指定范围；发送任务还会检查用户意图、目标与正文，并保留幂等键。
 
-未来媒体、联系人和群管理能力也接入这一入口，逐项验证后开放。Skill 负责操作流程，MCP 负责具体执行；安装 Skill 后仍需按下文配置本机 MCP。
+未来表情和好友管理能力也接入这一入口，逐项验证后开放。Skill 负责操作流程，MCP 负责具体执行；安装 Skill 后仍需按下文配置本机 MCP。
 
 ## 功能进度
 
@@ -56,24 +56,33 @@ weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 C
 | 服务生命周期 | `ensure_service` / `get_service_status` / `stop_service` | 跨会话共用，空闲一小时自动退出 |
 | 客户端识别 | `get_client_identity` | 架构、ELF SHA256、Build ID；无需附加进程 |
 | 能力查询 | `get_capabilities` | 区分已验证、待验证与当前可执行能力 |
-| 联系人和群搜索 | `search_contacts` | 按关键词查询，最多 50 条；支持仅搜索群 |
-| 聊天记录查询 | `get_messages` | 白名单会话，每个会话最多 20 条 |
-| 私聊文本发送 | `send_text_message` | 指定内部 ID，目标须在白名单中 |
+| 联系人和群搜索 | `search_contacts` | 按关键词和自定义条数查询；支持仅搜索群、选择排序 |
+| 聊天记录查询 | `get_messages` | 默认每会话 20 条；自定义数量，或 `0` / `null` 拉全部本机可读记录 |
+| 私聊文本发送 | `send_text_message` | 使用已确认的内部 ID，无需预先登记 |
 | 群聊文本发送 | `send_text_message` | 使用群内部 ID，与私聊共用发送接口 |
+| 本地图片发送 | `send_image` | 私聊实测通过；传本机文件路径，群媒体尚未实测 |
+| 本地文件发送 | `send_file` | 私聊实测通过；无工具箱大小或扩展名白名单 |
+| 群成员和群资料 | `get_group_members` / `get_group_info` | 成员 ID、群角色、公告与邀请确认状态；可请求刷新 |
+| 建群与邀请 | `create_group` / `invite_group_members` | 使用联系人 ID；返回新群 ID 或原生邀请结果 |
+| 踢出群成员 | `remove_group_members` | 群主或管理员将指定成员移出群；调用前刷新本人角色 |
+| 真实群提及 | `send_group_mention` | 指定成员、多个成员或 @所有人；写入原生提及字段 |
+| 群公告 | `set_group_announcement` | 发布、编辑完整纯文本公告；空文本清空 |
+| 群消息置顶 | `pin_group_message` | 使用服务器消息 ID 置顶或取消 |
+| 群聊邀请确认 | `set_group_invitation_confirmation` | 开关入群需群主/管理员同意 |
 | 发送去重 | 服务内置 | 幂等键持久化，跨进程去重，不确定结果不自动重发 |
 
-私聊、群聊文本发送和历史查询均做过真实客户端验证，客户端重启并重新登录后也完成过查询验证。**客户端返回成功，不代表对方已经收到或已读。**
+私聊、群聊文本发送和历史查询均做过真实客户端验证，客户端重启并重新登录后也完成过查询验证。本地 PNG 图片和文本文件已在私聊中完成原生发送测试；群成员、建群、邀请、移出成员、真实提及、公告、置顶及邀请确认也已做普通测试群验证。群媒体与其他格式尚未逐项验证。**客户端返回 `client_success` 即按发送成功处理，无需再回查历史。**
 
 ### 计划实现
 
 | 方向 | 计划能力 |
 | --- | --- |
-| 消息与媒体 | 实时消息事件、图片、文件、表情与 GIF、@群成员 |
+| 消息与媒体 | 实时消息事件、表情与 GIF |
 | 联系人 | 获取完整好友信息、修改好友备注、主动加好友、检查与接受好友申请 |
-| 群管理 | 获取群成员、创建群聊、邀请入群、群置顶消息、发布与编辑群公告、开关群聊邀请确认 |
+| 后续群能力 | 按实际需求扩展更多群设置与管理操作 |
 | 朋友圈与界面 | 读取与发表朋友圈、UI 截图 |
 
-“群聊邀请确认”指入群需要群主或管理员同意。媒体能力优先研究，随后完善联系人与群管理；具体可用状态以服务返回为准。完整范围见 [功能说明](docs/FEATURES.md)。
+“群聊邀请确认”指入群需要群主或管理员同意。本地媒体已在私聊验证，群管理已完成普通测试群的原生验证；后续继续扩展表情、好友和朋友圈能力；具体可用状态以服务返回为准。完整范围见 [功能说明](docs/FEATURES.md)。
 
 ## 快速开始
 
@@ -98,18 +107,16 @@ gcc -std=c11 -O2 -fPIC -shared \
 
 `hooks` 依赖固定使用已验证的 Frida 16.7.19。原生库加载后会留存到微信退出；升级库文件前先退出客户端。
 
-### 3. 创建私有配置
+### 3. 运行记录与目标选择
 
 ```bash
 mkdir -p .state
 chmod 700 .state
-cp examples/local-targets.example.json .state/local-targets.json
-chmod 600 .state/local-targets.json
 ```
 
-初始白名单为空，可以先搜索联系人或群。需要读取消息或发送文本时，将确认过的搜索结果 `chat_id` 加入私有配置的 `allowed_recipients` 数组，然后停止旧服务并重新连接 MCP。联系人名称可能重复，发送接口接受内部 ID。
+运行时不需要联系人配置文件。先搜索联系人或群，再使用确认过的 `chat_id` 查询消息或发送用户指定的文本；联系人名称可能重复，发送接口接受内部 ID。更换目标无需编辑本地配置或重启服务。
 
-`.state/` 已加入 `.gitignore`，包含白名单和运行记录。已有配置请直接编辑，保留原有幂等记录。
+`.state/` 已加入 `.gitignore`，用于保存运行信息与幂等记录；已有记录请保留，避免重复发送。
 
 ## 接入 Codex / Claude Code
 
@@ -129,13 +136,13 @@ claude mcp add --transport stdio --scope user weskill -- \
   "$PWD/.venv/bin/python" "$PWD/scripts/run_local_mcp.py"
 ```
 
-重新连接 MCP 或新开会话后，检查是否发现 8 个工具。微信重启或白名单改变后，先停止旧服务再启动；MCP 代码升级后先停止旧服务，再重新连接。启动器自动选择唯一的微信主进程；存在多个匹配进程时会停止并报告歧义。
+重新连接 MCP 或新开会话后，检查是否发现 19 个工具。微信重启后，先停止旧服务再启动；MCP 代码升级后先停止旧服务，再重新连接。启动器自动选择唯一的微信主进程；存在多个匹配进程时会停止并报告歧义。
 
 暂时只想查看客户端识别与功能状态，可将启动命令改成 `.venv/bin/weskill`，进入默认诊断模式，此模式只暴露两个诊断工具，不附加微信。
 
 ### 安装 weskill Skill
 
-仓库提供同一份 skill 和两端插件清单。先完成上面的 MCP 接入，再安装 Skill：
+仓库提供总入口 `weskill`、群管理 `weskill-group`，以及 Codex / Claude Code 两端插件清单。先完成上面的 MCP 接入，再安装 Skill：
 
 ```bash
 # Codex
@@ -169,28 +176,36 @@ claude plugin install weskill@weskill-local
 
 > 搜索名字包含“测试”的群，只列出匹配结果。
 >
-> 查看我指定的白名单会话最近 5 条消息，整理成待办。
+> 查看我指定的会话最近 5 条消息，整理成待办。
 >
 > 向指定测试群发送“连接测试完成”，只发一次。
+>
+> 把这张本机图片和这个文件发给我指定的测试联系人。
+>
+> 使用 `$weskill-group` 查看指定群成员，并 @我指定的两位成员。
+>
+> 用指定好友建群，发布公告，再将指定消息置顶。
 
 助手的典型调用顺序是 `get_capabilities` → `ensure_service` → `search_contacts` → `get_messages` 或 `send_text_message`。重名时先确定目标，发送前明确收件人与正文。
 
-一次发送需要一个幂等键。重连或超时后，**保留同一个键和相同内容**；更换键会被视为新操作。
+历史查询默认每会话 20 条，可传入任意正整数；`limit=0` 或 `null` 读取全部本机可读历史。服务内部按时间游标分批读取，接上重叠的边界记录。`include_xml=true` 可返回原始 XML。
+
+一次发送使用一个幂等键。同键同目标和正文可防止重复发送；媒体还绑定本机文件路径与字节内容；明确 `not_submitted` 时允许用原键再次调用，已经提交或结果不明时不会自动重发。
 
 | 发送状态 | 含义 |
 | --- | --- |
-| `not_submitted` | 未建立提交；保留记录，不自动重试 |
-| `client_success` | 客户端发送管线返回成功；尚未确认收件端送达 |
+| `not_submitted` | 未建立提交；可用原键再次调用 |
+| `client_success` | 客户端返回成功，即按本项目标准发送成功 |
 | `client_error` | 客户端回调返回错误 |
 | `unknown` | 提交或完成状态无法确定；不自动重发 |
 
-接口参数与典型响应见 [工具参考](docs/TOOLS.md)。
+群工具、邀请模式和测试范围见 [群管理说明](docs/GROUPS.md)。接口参数与典型响应见 [工具参考](docs/TOOLS.md)。已移除与仍保留的限制见 [当前约束清单](docs/LIMITS.md)。
 
 ## 连接超时排查
 
 若出现 `OperationCancelledError`，可能是 Frida 建立原生连接时触发超时。服务通过独立的常驻子进程建立原生连接，每次设置 15 秒超时。启动失败时，先清理尚未接受业务请求的子进程，再用新进程尝试一次；只有连接成功才提交业务，不会因此重复发送消息。两次均失败会返回 `connection_timeout` 和具体失败阶段。
 
-升级后需重新连接 MCP 或新开会话，让已运行的服务加载新代码。可用 `get_capabilities` 中的 `connection_policy` 核对连接策略。遇到 `unknown` 时保留原幂等键和运行记录，不要换键重发。
+升级后需重新连接 MCP 或新开会话，让已运行的服务加载新代码。可用 `get_capabilities` 中的 `connection_policy` 核对连接策略。遇到 `unknown` 时保留原键和记录，避免自动重复发送；用户提出新的发送任务时使用新键。
 
 ## 隐私与当前限制
 
@@ -216,6 +231,7 @@ MCP 接口以本机 stdio 运行，内部服务使用同用户 Unix socket，没
 - [REA：Reverse Engineer Anything](https://github.com/morluto/rea)：本项目采用其逆向研究工作流，组织 Linux 微信原生接口的定向分析与验证。
 
 - [Model Context Protocol](https://modelcontextprotocol.io/) 与 [Python SDK](https://github.com/modelcontextprotocol/python-sdk)：工具协议和 stdio 服务实现。
+- [Rprop/ipad 的邀请确认实现](https://github.com/Rprop/ipad/blob/0278be2947eef98cb73f46579bce4428f7e93b96/api/service/groupService.go#L404) 与 [协议定义](https://github.com/Rprop/ipad/blob/0278be2947eef98cb73f46579bce4428f7e93b96/protobuf/wechat_proto/chatRoomAccessVerify.proto#L8)：提供邀请确认字段研究线索，随后在 Linux 原生通道实测。
 - [Frida 文档](https://frida.re/docs/home/)：本机动态插桩与原生接口调用。
 - [OpenAI 插件打包规范](https://developers.openai.com/plugins/build/plugins) 与 [MCP 接入文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)：Codex 插件与服务接入。
 - [Claude Code 插件规范](https://code.claude.com/docs/en/plugins-reference)、[Marketplace 规范](https://code.claude.com/docs/en/plugin-marketplaces) 与 [Skills](https://code.claude.com/docs/en/skills)：Claude 插件布局与操作流程。

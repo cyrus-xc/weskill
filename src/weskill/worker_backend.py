@@ -71,8 +71,7 @@ class WorkerBackend(ExperimentalBackend):
                                       stdout=subprocess.PIPE, text=True, bufsize=1)
             try:
                 self._write(worker, {'pid': self.pid, 'shim_path': str(self.shim_path),
-                    'state_dir': str(self.state_dir / 'native'),
-                    'allowed_recipients': sorted(self.allowed_recipients)})
+                    'state_dir': str(self.state_dir / 'native')})
                 ready = self._read(worker, self.startup_timeout_seconds)
                 if ready.get('ready') is True:
                     self._worker = worker

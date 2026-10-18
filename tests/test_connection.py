@@ -37,7 +37,7 @@ class ConnectionTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name, [])
+        self.backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name)
         self.backend._verify_binding = Mock()
 
     def frida(self, effects):
@@ -85,23 +85,21 @@ class ConnectionTests(unittest.TestCase):
         self.assertEqual(device.attach.call_count, 1)
 
 
-    def test_exhausted_connection_keeps_send_ledger_without_resubmission(self):
-        backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name,
-                                      ['wxid_fixture_contact'])
+    def test_exhausted_connection_allows_explicit_retry_before_submission(self):
+        backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name)
         backend._ensure_session = Mock(side_effect=NativeConnectionTimeout(
             'Native connection timed out before any business task was submitted'))
         first = backend.send_text('wxid_fixture_contact', 'fixture text', 'cancelled-connect')
         self.assertEqual(first['status'], 'not_submitted')
         self.assertEqual(first['error_code'], 'connection_timeout')
         self.assertEqual(first['failure_stage'], 'connection')
-        self.assertIs(first['retry_allowed'], False)
+        self.assertIs(first['retry_allowed'], True)
         self.assertEqual(backend.send_text('wxid_fixture_contact', 'fixture text',
                                           'cancelled-connect'), first)
-        backend._ensure_session.assert_called_once()
+        self.assertEqual(backend._ensure_session.call_count, 2)
 
     def test_cancellation_at_business_submission_is_unknown_and_never_repeated(self):
-        backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name,
-                                      ['wxid_fixture_contact'])
+        backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name)
         backend._frida = SimpleNamespace(Cancellable=Token)
         backend._verify_binding = Mock()
         handler = {}
@@ -133,6 +131,33 @@ class ConnectionTests(unittest.TestCase):
         self.assertEqual(submitted, ['fixture-task'])
         backend._ensure_session.assert_called_once()
         script.eternalize.assert_called_once()
+    def test_client_success_does_not_wait_for_callback_destruction_or_history(self):
+        backend = self.backend
+        handlers = {}
+        script = SimpleNamespace(on=lambda name, cb: handlers.update({name: cb}),
+                                 load=lambda: None, eternalize=Mock())
+        backend._ensure_session = Mock(return_value=SimpleNamespace(
+            create_script=lambda source: script))
+        backend._wait_idle = Mock(return_value={'tid': 42, 'noopRuns': 1})
+
+        def rpc(agent, name, *args):
+            if name == 'prepare':
+                return 'task'
+            if name == 'submit_task':
+                payload = ({'kind': 'executor_noop', 'tid': 42} if args[0] is None
+                           else {'kind': 'text_send_result', 'result': {'success': True}, 'error': ''})
+                handlers['message']({'type': 'send', 'payload': payload}, None)
+                return 0
+            if name == 'status':
+                return {'invoked': True, 'completed': True, 'destroyed': False,
+                        'invocationCount': 1, 'completionCount': 1, 'errors': []}
+
+        backend._rpc = Mock(side_effect=rpc)
+        result = backend.send_text('filehelper', 'fixture', 'client-success-only')
+        self.assertEqual(result['status'], 'client_success')
+        script.eternalize.assert_called_once()
+        self.assertEqual(backend._ensure_session.call_count, 1)
+
 
 
 if __name__ == '__main__':

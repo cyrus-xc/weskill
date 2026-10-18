@@ -12,8 +12,7 @@ def emit(value):
 
 def main():
     config = json.loads(sys.stdin.readline())
-    backend = ExperimentalBackend(config['pid'], config['shim_path'], config['state_dir'],
-                                  config['allowed_recipients'])
+    backend = ExperimentalBackend(config['pid'], config['shim_path'], config['state_dir'])
     try:
         backend._ensure_session()
     except Exception as error:
@@ -28,11 +27,11 @@ def main():
         try:
             if mode == 'search':
                 response = backend.search_contacts(values['keywords'], values['limit'],
-                                                   values['filter_type'] == 2)
+                                                   values['filter_type'] == 2, values['sort_by_time'])
             elif mode == 'messages':
-                response = backend.get_messages(values['chat_ids'], values['limit'])
-            elif mode == 'send':
-                response = backend.send_text(values['recipient'], values['text'], request['id'])
+                response = backend._run('messages', values)
+            elif mode in ('send', 'media', 'group', 'mention'):
+                response = backend._run(mode, values)  # The parent owns the durable send ledger.
             else:
                 raise ValueError('Unsupported native operation')
         except Exception as error:

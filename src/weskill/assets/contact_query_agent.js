@@ -4,7 +4,6 @@
 // The parent verifies executable SHA-256/PID and runs taskAddress through its
 // native executor on the appropriate application thread. Loading this file or
 // calling prepare() never invokes the adapter. No timeout or unload is scheduled.
-const MAX_STRING_BYTES = 64 * 1024;
 const ADAPTER_OFFSET = 0x6c4c50c;
 let FIXED_QUERY;
 const queryState = {
@@ -35,19 +34,15 @@ function readCppString(address) {
     data = address.add(1);
   } else {
     const nativeLength = address.add(8).readU64();
-    if (nativeLength.compare(uint64(MAX_STRING_BYTES)) > 0) {
-      throw new Error('Completion string exceeds 64 KiB limit');
-    }
     length = nativeLength.toNumber();
     data = address.add(16).readPointer();
     if (length !== 0 && data.isNull()) throw new Error('Null long-string data');
   }
-  if (length > MAX_STRING_BYTES) throw new Error('Completion string exceeds limit');
   return length === 0 ? '' : data.readUtf8String(length);
 }
 
 function makeFixedInput(text) {
-  // Bounded query JSON is ASCII-escaped before native string allocation.
+  // Query JSON is ASCII-escaped before native string allocation.
   if (!/^[\x20-\x7e]*$/.test(text)) throw new Error('Expected ASCII-escaped JSON');
   const object = Memory.alloc(24);
   object.writeByteArray(new Uint8Array(24));
@@ -87,22 +82,50 @@ function validateAdapter() {
   return entry;
 }
 
+function withRequestedLimit(expectedTid, requested, invoke) {
+  const nativeLimit = requested;
+  if (nativeLimit > 0 && nativeLimit <= 50) return invoke();
+  const entry = queryKeepalive.mainBase.add(0x6c924c8);
+  const expected = [2847570941, 2835443708, 2835507194, 2835570680];
+  expected.forEach((word, i) => {
+    if (entry.add(i * 4).readU32() !== word) throw new Error('Query business prologue mismatch');
+  });
+  let applied = false;
+  const hook = Interceptor.attach(entry, {
+    onEnter(args) {
+      if (Process.getCurrentThreadId() === expectedTid) {
+        args[1].add(68).writeS32(nativeLimit);
+        applied = true;
+      }
+    }
+  });
+  try {
+    Interceptor.flush();
+    const result = invoke();
+    if (!applied) throw new Error('Requested query count was not applied');
+    queryState.effectiveLimit = nativeLimit;
+    return result;
+  } finally {
+    hook.detach();
+    Interceptor.flush();
+  }
+}
+
 rpc.exports = {
   prepare(expectedTid, parameters) {
     if (!Number.isInteger(expectedTid) || expectedTid <= 0) throw new Error("Expected verified executor TID");
     if (!parameters || !Array.isArray(parameters.keywords) ||
-        parameters.keywords.length < 1 || parameters.keywords.length > 8 ||
-        parameters.keywords.some(x => typeof x !== 'string' || !x.trim() || x.length > 128 || x.includes('\0')) ||
-        !Number.isInteger(parameters.limit) || parameters.limit < 1 || parameters.limit > 50 ||
+        parameters.keywords.some(x => typeof x !== 'string' || x.includes('\0')) ||
+        !(Number.isInteger(parameters.limit) && parameters.limit > 0) ||
         (parameters.filter_type !== 1 && parameters.filter_type !== 2) ||
-        parameters.only_authorized !== false || parameters.sort_by_time !== false) {
-      throw new Error('Invalid bounded contact query');
+        parameters.only_authorized !== false || typeof parameters.sort_by_time !== 'boolean') {
+      throw new Error('Invalid contact query');
     }
     const entry = validateAdapter();
     if (queryState.prepared) return queryKeepalive.task.toString();
 
     FIXED_QUERY = parameters;
-    const json = JSON.stringify(parameters).replace(/[\u007f-\uffff]/g,
+    const json = JSON.stringify({...parameters, limit: Math.min(parameters.limit || 1, 50)}).replace(/[\u007f-\uffff]/g,
       ch => '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0'));
     queryKeepalive.input = makeFixedInput(json);
     queryKeepalive.context = Memory.alloc(24);
@@ -175,8 +198,9 @@ rpc.exports = {
       queryState.invocationCount++;
       try {
         validateAdapter();
-        queryKeepalive.adapter(ptr(0), queryKeepalive.input,
-          queryKeepalive.context, queryKeepalive.wrapper);
+        withRequestedLimit(expectedTid, parameters.limit, () =>
+          queryKeepalive.adapter(ptr(0), queryKeepalive.input,
+            queryKeepalive.context, queryKeepalive.wrapper));
       } catch (e) {
         recordQueryError('adapter', e);
         send({kind: 'contact_query_error', errors: queryState.errors.slice()});
@@ -188,6 +212,7 @@ rpc.exports = {
 
   status() {
     return {
+      effectiveLimit: queryState.effectiveLimit,
       prepared: queryState.prepared,
       invoked: queryState.invoked,
       completed: queryState.completed,

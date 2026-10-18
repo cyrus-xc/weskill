@@ -22,8 +22,7 @@ class LocalService(socketserver.ThreadingUnixStreamServer):
         self.profile = profile
         self.service_dir = service_dir
         self.socket_path = service_dir / 'service.sock'
-        self.backend = WorkerBackend(profile['pid'], profile['shim_path'], profile['state_dir'],
-                                     profile['allowed_recipients'])
+        self.backend = WorkerBackend(profile['pid'], profile['shim_path'], profile['state_dir'])
         self.state_lock = threading.Lock()
         self.last_request = time.monotonic()
         self.active_requests = 0
@@ -77,8 +76,8 @@ class Handler(socketserver.StreamRequestHandler):
                 socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i')))
             if uid != os.getuid():
                 raise PermissionError('Local service only accepts the same user')
-            line = self.rfile.readline(1048577)
-            if not line.endswith(b'\n') or len(line) > 1048576:
+            line = self.rfile.readline()
+            if not line.endswith(b'\n'):
                 raise ValueError('Invalid local request frame')
             request = json.loads(line)
             method = request['method']
@@ -102,7 +101,7 @@ class Handler(socketserver.StreamRequestHandler):
                 with server.state_lock:
                     result = server.snapshot()
             elif method != 'stop':
-                if method not in {'search_contacts', 'get_messages', 'send_text'}:
+                if method not in {'search_contacts', 'get_messages', 'send_text', 'send_image', 'send_file', 'get_group_members', 'get_group_info', 'create_group', 'invite_group_members', 'remove_group_members', 'preview_group_announcement', 'set_group_announcement', 'send_group_mention', 'preview_group_pin', 'pin_group_message', 'set_group_invitation_confirmation'}:
                     raise ValueError('Unsupported local service method')
                 result = getattr(server.backend, method)(**request['arguments'])
             response = {'result': result}

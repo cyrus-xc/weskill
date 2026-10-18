@@ -6,7 +6,7 @@
       "name": "weskill",
       "source": "./plugins/weskill",
       "description": "weskill：Linux 微信操作 Skill 与本机 MCP",
-      "version": "0.1.0",
+      "version": "0.2.1",
       "license": "MIT"
     }
   ]

@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from . import __version__
+
 
 RESEARCH_TARGET = {
     "version": "4.1.13.26",
@@ -16,12 +18,13 @@ RESEARCH_TARGET = {
 _OPERATIONS = (
     ("receive_messages", "接收消息事件", None),
     ("get_messages", "获取聊天消息", "message::list_messages"),
-    ("list_contacts", "搜索联系人（有界）", "contact::search_contacts"),
-    ("list_groups", "搜索群聊（有界）", "contact::search_contacts"),
+    ("list_contacts", "搜索联系人", "contact::search_contacts"),
+    ("list_groups", "搜索群聊", "contact::search_contacts"),
+    ("get_group_info", "获取群资料与公告", None),
     ("send_private_text", "发送私聊文本", "message::send_text_message"),
     ("send_group_text", "发送群聊文本", "message::send_text_message"),
-    ("send_image", "发送图片", None),
-    ("send_file", "发送文件", None),
+    ("send_image", "发送图片", "message::send_message"),
+    ("send_file", "发送文件", "message::send_message"),
     ("send_emoji", "发送普通Unicode表情", None),
     ("send_custom_sticker", "发送自定义表情或GIF", None),
     ("add_friend", "主动添加好友", None),
@@ -34,6 +37,7 @@ _OPERATIONS = (
     ("get_friend_info", "获取好友信息", "contact::getcontact"),
     ("create_group", "发起群聊", None),
     ("invite_group_members", "拉朋友进群", None),
+    ("remove_group_members", "踢出群成员", None),
     ("pin_group_message", "标记群置顶消息", None),
     ("send_group_announcement", "发送群公告", None),
     ("edit_group_announcement", "编辑群公告", None),
@@ -43,19 +47,24 @@ _OPERATIONS = (
 )
 
 
-VERIFIED = {"get_messages", "list_contacts", "list_groups", "send_private_text", "send_group_text"}
+GROUP_VERIFIED = {"get_group_members", "get_group_info", "create_group", "invite_group_members", "remove_group_members",
+                  "mention_group_member", "send_group_announcement", "edit_group_announcement",
+                  "pin_group_message", "group_invitation_confirmation"}
+VERIFIED = {"get_messages", "list_contacts", "list_groups", "send_private_text", "send_group_text",
+            "send_image", "send_file"} | GROUP_VERIFIED
 
 
 def capability_report() -> dict[str, Any]:
     return {
         "stage": "research_diagnostics",
+        "toolbox_version": __version__,
         "transport": "stdio",
         "available_tools": ["get_client_identity", "get_capabilities"],
         "business_operations_available": False,
         "research_target": dict(RESEARCH_TARGET),
         "candidate_scope": "Recorded build and runtime capture only; not automatically matched to the configured client or current process",
         "status_definitions": {
-            "prototype_verified": "Actual native prototype verified; executable via opt-in backend only, delivery not confirmed",
+            "prototype_verified": "Actual native prototype verified; executable via opt-in backend only, client success is the send-success criterion",
             "candidate_runtime": "Name observed in recorded runtime registry; no business invocation or success verified",
             "unverified": "No usable implementation verified",
         },
@@ -66,7 +75,9 @@ def capability_report() -> dict[str, Any]:
                 "status": "prototype_verified" if name in VERIFIED else "candidate_runtime" if seed else "unverified",
                 "execution_available": False,
                 "evidence": (
-                    [{
+                    [{"kind": "native_runtime_verified", "source": "docs/GROUPS.md",
+                      "limitation": "Ordinary test groups on the recorded build; invitations do not imply acceptance"}]
+                    if name in GROUP_VERIFIED else [{
                         "kind": "runtime_registered",
                         "seed": seed,
                         "source": "docs/FEATURES.md",

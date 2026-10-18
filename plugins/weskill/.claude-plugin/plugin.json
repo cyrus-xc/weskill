@@ -1,7 +1,7 @@
 {
   "name": "weskill",
-  "version": "0.1.0",
-  "description": "Linux WeChat operation skill for contact and group search, bounded history, and authorized text messaging, backed by the local weskill MCP.",
+  "version": "0.2.1",
+  "description": "Linux WeChat toolbox: weskill entry skill, weskill-group administration skill, and a shared local native MCP.",
   "license": "MIT",
   "keywords": [
     "wechat",

@@ -39,8 +39,7 @@ class WorkerProtocolTests(unittest.TestCase):
         self.directory = Path(self.tmp.name)
         self.script = self.directory / 'fixture_worker.py'
         self.script.write_text(FIXTURE)
-        self.backend = WorkerBackend(123, '/nonexistent/fixture.so', self.directory,
-                                     ['wxid_fixture_contact'])
+        self.backend = WorkerBackend(123, '/nonexistent/fixture.so', self.directory)
         self.addCleanup(self.cleanup)
 
     def cleanup(self):
@@ -87,8 +86,10 @@ class WorkerProtocolTests(unittest.TestCase):
         self.assertEqual(result['error_code'], 'connection_timeout')
         self.assertEqual(self.counter('starts'), 2)
         self.assertEqual(self.counter('operations'), 0)
-        self.assertEqual(self.backend.send_text('wxid_fixture_contact', 'fixture', 'failed-start'), result)
-        self.assertEqual(self.counter('starts'), 2)
+        retry = self.backend.send_text('wxid_fixture_contact', 'fixture', 'failed-start')
+        self.assertEqual(retry['status'], 'not_submitted')
+        self.assertEqual(self.counter('starts'), 4)
+        self.assertEqual(self.counter('operations'), 0)
 
     def test_permission_failure_does_not_restart_the_worker(self):
         self.mode('permission')

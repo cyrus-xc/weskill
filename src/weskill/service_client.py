@@ -17,18 +17,17 @@ from .identity import discover_client_pid
 
 
 class ServiceBackend:
-    def __init__(self, pid, shim_path, state_dir, allowed_recipients, idle_timeout_seconds=3600):
+    def __init__(self, pid, shim_path, state_dir, idle_timeout_seconds=3600):
         self.pid = pid
         self.shim_path = Path(shim_path).resolve()
         self.state_dir = Path(state_dir).resolve()
-        self.allowed_recipients = frozenset(allowed_recipients)
         self.idle_timeout_seconds = idle_timeout_seconds
         self.service_dir = self.state_dir.parent / 'service'
         self.service_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
         os.chmod(self.service_dir, 0o700)
         self.socket_path = self.service_dir / 'service.sock'
         self.pid_path = self.service_dir / 'service.json'
-        self.timeout_seconds = 170.0
+        self.timeout_seconds = None  # History pagination has no aggregate socket deadline.
         self._profile_cache = None
 
     def _profile(self):
@@ -36,7 +35,6 @@ class ServiceBackend:
             return self._profile_cache
         value = {'pid': self.pid if self.pid is not None else discover_client_pid(),
                  'shim_path': str(self.shim_path), 'state_dir': str(self.state_dir),
-                 'allowed_recipients': sorted(self.allowed_recipients),
                  'idle_timeout_seconds': self.idle_timeout_seconds}
         value['profile_key'] = hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
         self._profile_cache = value
@@ -124,15 +122,61 @@ class ServiceBackend:
             self._profile_cache = None
             return {'stopped': True, 'already_stopped': True}
 
-    def search_contacts(self, keywords, limit=10, groups_only=False):
+    def search_contacts(self, keywords, limit=10, groups_only=False, sort_by_time=False):
         return self._call('search_contacts', {'keywords': keywords, 'limit': limit,
-                                               'groups_only': groups_only})
+                                               'groups_only': groups_only, 'sort_by_time': sort_by_time})
 
-    def get_messages(self, chat_ids, limit=10):
-        return self._call('get_messages', {'chat_ids': chat_ids, 'limit': limit})
+    def get_messages(self, chat_ids, limit=20, include_xml=False):
+        return self._call('get_messages', {'chat_ids': chat_ids, 'limit': limit, 'include_xml': include_xml})
 
     def send_text(self, recipient_id, text, idempotency_key):
-        if recipient_id not in self.allowed_recipients:
-            raise PermissionError('Recipient is outside the explicit allowlist')
         return self._call('send_text', {'recipient': recipient_id, 'text': text,
                                        'idempotency_key': idempotency_key})
+
+    def send_image(self, recipient_id, file_path, idempotency_key):
+        return self._call('send_image', {'recipient': recipient_id, 'file_path': str(file_path),
+                                         'idempotency_key': idempotency_key})
+
+    def send_file(self, recipient_id, file_path, idempotency_key):
+        return self._call('send_file', {'recipient': recipient_id, 'file_path': str(file_path),
+                                        'idempotency_key': idempotency_key})
+
+    def get_group_members(self, group_id, refresh=True):
+        return self._call('get_group_members', {'group_id': group_id, 'refresh': refresh})
+
+    def get_group_info(self, group_id, refresh=True):
+        return self._call('get_group_info', {'group_id': group_id, 'refresh': refresh})
+
+    def create_group(self, member_ids, name, idempotency_key):
+        return self._call('create_group', {'member_ids': member_ids, 'name': name,
+                                          'idempotency_key': idempotency_key})
+
+    def invite_group_members(self, group_id, member_ids, idempotency_key, mode='invite'):
+        return self._call('invite_group_members', {'group_id': group_id, 'member_ids': member_ids,
+            'idempotency_key': idempotency_key, 'mode': mode})
+
+    def remove_group_members(self, group_id, member_ids, idempotency_key):
+        return self._call('remove_group_members', {'group_id': group_id, 'member_ids': member_ids,
+                                                 'idempotency_key': idempotency_key})
+
+    def preview_group_announcement(self, group_id, text):
+        return self._call('preview_group_announcement', {'group_id': group_id, 'text': text})
+
+    def set_group_announcement(self, group_id, text, idempotency_key):
+        return self._call('set_group_announcement', {'group_id': group_id, 'text': text,
+                                                  'idempotency_key': idempotency_key})
+
+    def send_group_mention(self, group_id, text, member_ids, idempotency_key, mention_all=False):
+        return self._call('send_group_mention', {'group_id': group_id, 'text': text,
+            'member_ids': member_ids, 'idempotency_key': idempotency_key, 'mention_all': mention_all})
+
+    def preview_group_pin(self, group_id, message_id):
+        return self._call('preview_group_pin', {'group_id': group_id, 'message_id': message_id})
+
+    def pin_group_message(self, group_id, message_id, idempotency_key, pinned=True):
+        return self._call('pin_group_message', {'group_id': group_id, 'message_id': message_id,
+            'idempotency_key': idempotency_key, 'pinned': pinned})
+
+    def set_group_invitation_confirmation(self, group_id, enabled, idempotency_key):
+        return self._call('set_group_invitation_confirmation', {'group_id': group_id,
+            'enabled': enabled, 'idempotency_key': idempotency_key})

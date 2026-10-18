@@ -5,7 +5,6 @@
 // native executor on the appropriate application thread. Loading this file or
 // calling prepare() never invokes the adapter. No timeout, retry or unload is
 // scheduled. Parent must submit at most once and await callback destruction.
-const MAX_STRING_BYTES = 64 * 1024;
 const ADAPTER_OFFSET = 0x6c53230;
 const textSendState = {
   prepared: false,
@@ -36,14 +35,10 @@ function readCppString(address) {
     data = address.add(1);
   } else {
     const nativeLength = address.add(8).readU64();
-    if (nativeLength.compare(uint64(MAX_STRING_BYTES)) > 0) {
-      throw new Error('Completion string exceeds 64 KiB limit');
-    }
     length = nativeLength.toNumber();
     data = address.add(16).readPointer();
     if (length !== 0 && data.isNull()) throw new Error('Null long-string data');
   }
-  if (length > MAX_STRING_BYTES) throw new Error('Completion string exceeds limit');
   return length === 0 ? '' : data.readUtf8String(length);
 }
 
@@ -92,12 +87,12 @@ rpc.exports = {
   prepare(expectedTid, recipient, text) {
     if (!Number.isInteger(expectedTid) || expectedTid <= 0) throw new Error("Expected verified executor TID");
     const entry = validateAdapter();
-    if (typeof recipient !== 'string' || !/^(wxid_[A-Za-z0-9_-]{1,128}|[1-9][0-9]{4,31}@chatroom)$/.test(recipient)) {
+    if (typeof recipient !== 'string' || !recipient.trim() || recipient.includes('\0')) {
       throw new Error('Expected one verified contact or group id');
     }
-    if (typeof text !== 'string' || text.trim().length === 0 || text.length > 4096 ||
+    if (typeof text !== 'string' || text.trim().length === 0 ||
         text.indexOf('\0') !== -1) {
-      throw new Error('Expected nonempty text of at most 4096 UTF-16 code units without NUL');
+      throw new Error('Expected nonempty text without NUL');
     }
     // Reject lone surrogates rather than silently changing the authorized text.
     for (let i = 0; i < text.length; i++) {
@@ -146,6 +141,7 @@ rpc.exports = {
           kind: 'text_send_result',
           recipient: textSendKeepalive.recipient,
           result: result,
+          raw_json: outputText,
           deliveryConfirmed: false,
           callbackTid: Process.getCurrentThreadId(),
           error: errorText
