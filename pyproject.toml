@@ -3,9 +3,9 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wechat-mcp"
+name = "weskill"
 version = "0.1.0"
-description = "Experimental local MCP toolbox for native Linux WeChat"
+description = "Linux WeChat operation skill backed by an experimental local MCP"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -13,17 +13,17 @@ requires-python = ">=3.12"
 dependencies = ["mcp>=1.28,<2", "pyelftools>=0.33,<1"]
 
 [project.urls]
-Repository = "https://github.com/cyrus-xc/wechat-mcp"
-Issues = "https://github.com/cyrus-xc/wechat-mcp/issues"
+Repository = "https://github.com/cyrus-xc/weskill"
+Issues = "https://github.com/cyrus-xc/weskill/issues"
 
 [project.optional-dependencies]
 hooks = ["frida==16.7.19"]
 
 [project.scripts]
-wechat-mcp = "wechat_mcp.server:main"
+weskill = "weskill.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-wechat_mcp = ["assets/*.js"]
+weskill = ["assets/*.js"]

@@ -19,14 +19,14 @@ class StdioIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def connect_and_check(self, client_path: Path, check) -> None:
         parameters = StdioServerParameters(
             command=sys.executable,
-            args=["-m", "wechat_mcp", "--client-path", str(client_path)],
+            args=["-m", "weskill", "--client-path", str(client_path)],
             env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
         )
         async with asyncio.timeout(30):
             async with stdio_client(parameters) as (read, write):
                 async with ClientSession(read, write) as session:
                     initialized = await session.initialize()
-                    self.assertEqual(initialized.serverInfo.name, "wechat-mcp")
+                    self.assertEqual(initialized.serverInfo.name, "weskill")
                     await check(session)
 
     async def test_discovery_and_real_identity(self) -> None:

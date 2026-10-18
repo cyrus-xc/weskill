@@ -2,6 +2,9 @@
 
 | 工具 | 参数 | 边界 |
 | --- | --- | --- |
+| `ensure_service` | 无 | 启动或续期本机共享服务；空闲一小时退出 |
+| `get_service_status` | 无 | 查询状态，不启动已停止服务；请求会续期 |
+| `stop_service` | 无 | 无在途请求时停止服务 |
 | `get_client_identity` | 无 | 读取 ELF 身份，不附加进程 |
 | `get_capabilities` | 无 | 当前可用工具与状态 |
 | `search_contacts` | `keywords` 字符串数组、`limit`、`groups_only` | 1–8 个关键词，单项最多 128 字符；上限 50 条 |

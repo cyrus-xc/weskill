@@ -2,7 +2,7 @@
 from pathlib import Path
 import tempfile
 import unittest
-from wechat_mcp.identity import discover_client_pid
+from weskill.identity import discover_client_pid
 
 class DiscoveryTests(unittest.TestCase):
     def test_main_executable_only_and_ambiguity_refused(self):

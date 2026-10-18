@@ -6,7 +6,7 @@ import tempfile
 import threading
 import unittest
 
-from wechat_mcp.backend import ExperimentalBackend
+from weskill.backend import ExperimentalBackend
 
 CONTACT = 'wxid_fixture_contact'
 GROUP = '12345678@chatroom'

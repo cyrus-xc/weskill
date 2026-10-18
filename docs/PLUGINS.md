@@ -1,16 +1,16 @@
 # Codex 与 Claude 插件发布准备
 
-同一份 `SKILL.md` 服务于两端，插件身份与版本均为 `wechat-mcp` / `0.1.0`。skill 提供操作流程，原生 MCP 环境按 README 单独安装与注册；插件不包含私有配置、客户端二进制或预编译原生库。
+同一份 `SKILL.md` 服务于两端，插件身份与版本均为 `weskill` / `0.1.0`。skill 提供操作流程，原生 MCP 环境按 README 单独安装与注册；插件不包含私有配置、客户端二进制或预编译原生库。
 
 ```text
 .agents/plugins/marketplace.json            Codex 本地 marketplace
 .claude-plugin/marketplace.json            Claude 本地 marketplace
-plugins/wechat-mcp/
+plugins/weskill/
 ├── .codex-plugin/plugin.json              Codex 兼容清单
 ├── .claude-plugin/plugin.json             Claude 清单
 ├── LICENSE
 ├── assets/logo.svg
-└── skills/wechat-mcp/
+└── skills/weskill/
     ├── SKILL.md
     ├── agents/openai.yaml
     ├── assets/logo.svg
@@ -25,14 +25,14 @@ Codex 使用仍受支持的 `.codex-plugin/plugin.json` 布局，Claude 使用 `
 
 ```bash
 codex plugin marketplace add "$PWD"
-codex plugin add wechat-mcp@wechat-mcp-local
+codex plugin add weskill@weskill-local
 ```
 
 ```bash
 claude plugin validate .
-claude plugin validate ./plugins/wechat-mcp
+claude plugin validate ./plugins/weskill
 claude plugin marketplace add "$PWD"
-claude plugin install wechat-mcp@wechat-mcp-local
+claude plugin install weskill@weskill-local
 ```
 
 重新加载插件或新开会话。验证“列出当前能力”“搜索群”“重名目标”“发送超时”“请求未实现的图片功能”等场景；涉及真实发送时使用用户明确指定的测试会话与正文。
@@ -45,7 +45,7 @@ claude plugin install wechat-mcp@wechat-mcp-local
 
 ```bash
 mkdir -p dist
-python3 -m zipfile -c dist/wechat-mcp-plugin-0.1.0.zip plugins/wechat-mcp
+python3 -m zipfile -c dist/weskill-plugin-0.1.0.zip plugins/weskill
 ```
 
 OpenAI 和 Claude 的公开目录有各自的审核与发布流程。本仓库包含本地安装所需清单，不表示已通过审核或已上架。公开提交时还需按目标平台要求完善维护者、支持方式与隐私信息，并在干净环境中复核安装说明。

@@ -1,0 +1,7 @@
+interface:
+  display_name: "weskill"
+  short_description: "Orchestrate Linux WeChat tasks with a local MCP"
+  icon_large: "./assets/logo.svg"
+  icon_small: "./assets/logo.png"
+  brand_color: "#35C7AE"
+  default_prompt: "使用 $weskill 检查本机微信连接并列出当前可用能力。"

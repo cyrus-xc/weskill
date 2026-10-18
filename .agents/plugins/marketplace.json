@@ -1,14 +1,14 @@
 {
-  "name": "wechat-mcp-local",
+  "name": "weskill-local",
   "interface": {
-    "displayName": "微桥 · WeChat MCP"
+    "displayName": "weskill"
   },
   "plugins": [
     {
-      "name": "wechat-mcp",
+      "name": "weskill",
       "source": {
         "source": "local",
-        "path": "./plugins/wechat-mcp"
+        "path": "./plugins/weskill"
       },
       "policy": {
         "installation": "AVAILABLE",

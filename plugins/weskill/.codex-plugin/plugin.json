@@ -1,0 +1,19 @@
+{
+  "name": "weskill",
+  "version": "0.1.0",
+  "description": "Linux WeChat operation skill for contact and group search, bounded history, and authorized text messaging, backed by the local weskill MCP.",
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "weskill",
+    "shortDescription": "微信操作 Skill：搜索、消息查询与授权文本发送",
+    "longDescription": "以一个微信操作 Skill 编排联系人和群搜索、有界历史消息查询，以及用户授权的私聊和群聊文本发送。配套 weskill 本机 MCP 执行原生调用；当前仅验证 ARM64 特定微信构建，媒体、好友和群管理等能力按验证进度开放。",
+    "category": "Productivity",
+    "brandColor": "#35C7AE",
+    "logo": "./assets/logo.png",
+    "composerIcon": "./assets/logo.png",
+    "defaultPrompt": [
+      "使用 weskill 检查本机微信连接，先列出当前可用能力。"
+    ]
+  }
+}

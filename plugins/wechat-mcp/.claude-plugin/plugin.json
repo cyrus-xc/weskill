@@ -1,7 +1,0 @@
-{
-  "name": "wechat-mcp",
-  "version": "0.1.0",
-  "description": "Use the local Linux WeChat MCP toolbox to find chats, read bounded history and send authorized text with durable idempotency.",
-  "license": "MIT",
-  "keywords": ["wechat", "linux", "mcp", "messaging"]
-}

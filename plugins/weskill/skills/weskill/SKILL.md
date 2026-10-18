@@ -1,17 +1,21 @@
 ---
-name: wechat-mcp
-description: Use the local Linux WeChat MCP toolbox to find contacts or groups, read selected chat history, and send user-authorized private or group text. Applies to WeChat tasks through this toolbox; consult live capabilities for other operations.
+name: weskill
+description: "Orchestrate local Linux WeChat tasks: find contacts or groups, read selected chat history, and send user-authorized private or group text through the weskill MCP. Consult live capabilities for other WeChat operations."
 ---
 
-# 微桥 · WeChat MCP
+# weskill
 
-使用已连接的本机 `wechat-mcp` MCP 服务完成微信任务。工具名前缀由宿主决定，按下列工具的实际名称发现即可。skill 本身不提供微信连接。
+作为统一的微信操作 Skill，编排目标搜索、消息查询和用户授权的文本发送，通过已连接的本机 `weskill` MCP 服务执行。工具名前缀由宿主决定，按下列工具的实际名称发现即可。skill 本身不提供微信连接。
 
 ## 确定可用能力与目标
 
-首次使用或连接改变后，调用 `get_capabilities`；需要核对客户端构建时调用 `get_client_identity`。默认诊断模式只有这两个工具。业务工具缺失时，报告需要启用本机原生模式；安装与连接问题读取 [连接说明](references/setup.md)。
+开始微信任务时先调用 `get_capabilities`，再用 `ensure_service` 确保本机共享服务运行。请求会自动续期，最后一次请求完成后一小时空闲会退出；正常操作无需反复检查进程。需要核对客户端构建时调用 `get_client_identity`。默认诊断模式只有这两个工具。业务工具缺失时，报告需要启用本机原生模式；安装与连接问题读取 [连接说明](references/setup.md)。
 
 按用户给出的名字调用 `search_contacts`，用 `groups_only=true` 搜索群，`false` 搜索私聊联系人。使用结果中的 `chat_id`，不由名称猜 ID。核对用户指定的目标；重名或结果不确定时先消歧。搜索有上限，零结果不证明整个帐号中不存在该会话。
+
+## 控制服务
+
+用户只询问运行状态时，调用 `get_service_status`，此工具不会启动已停止的服务。用户明确要求关闭时调用 `stop_service`；有在途请求时服务会拒绝停止。微信重启或本机白名单配置改变后，先结束当前业务，再停止旧服务并用 `ensure_service` 启动新配置。仅确保服务运行不会发送消息或附加微信，原生连接在首个业务请求时建立。
 
 ## 读取消息
 

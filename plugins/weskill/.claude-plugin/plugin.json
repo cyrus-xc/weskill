@@ -1,0 +1,13 @@
+{
+  "name": "weskill",
+  "version": "0.1.0",
+  "description": "Linux WeChat operation skill for contact and group search, bounded history, and authorized text messaging, backed by the local weskill MCP.",
+  "license": "MIT",
+  "keywords": [
+    "wechat",
+    "linux",
+    "skill",
+    "mcp",
+    "messaging"
+  ]
+}

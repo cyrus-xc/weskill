@@ -56,16 +56,16 @@ def main():
             except ValueError:
                 errors.append(f'{name}: invalid JSON')
 
-    plugin = ROOT / 'plugins/wechat-mcp'
+    plugin = ROOT / 'plugins/weskill'
     for host in ('codex', 'claude'):
         manifest = plugin / f'.{host}-plugin/plugin.json'
         value = json.loads(manifest.read_text())
-        if value.get('name') != 'wechat-mcp' or value.get('version') != '0.1.0':
+        if value.get('name') != 'weskill' or value.get('version') != '0.1.0':
             errors.append(f'{manifest.relative_to(ROOT)}: inconsistent plugin identity')
     required = [ROOT / '.agents/plugins/marketplace.json',
                 ROOT / '.claude-plugin/marketplace.json',
-                plugin / 'skills/wechat-mcp/SKILL.md', plugin / 'LICENSE',
-                plugin / 'assets/logo.svg', plugin / 'skills/wechat-mcp/assets/logo.svg']
+                plugin / 'skills/weskill/SKILL.md', plugin / 'LICENSE',
+                plugin / 'assets/logo.svg', plugin / 'skills/weskill/assets/logo.svg']
     for path in required:
         if not path.is_file():
             errors.append(f'{path.relative_to(ROOT)}: required release file is missing')

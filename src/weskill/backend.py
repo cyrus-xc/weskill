@@ -23,6 +23,10 @@ MAIN_SHA256 = '71e22a172018bf250b7b70493382bf55024727144eb7f13cf9b312cdf02e5bbc'
 RECIPIENT = re.compile(r'^(wxid_[A-Za-z0-9_-]{1,128}|[1-9][0-9]{4,31}@chatroom)$')
 
 
+class NativeConnectionTimeout(TimeoutError):
+    """The pre-submission attachment watchdog was exhausted."""
+
+
 def _start_time(pid: int) -> str:
     value = Path(f'/proc/{pid}/stat').read_text()
     return value[value.rfind(')') + 2:].split()[19]
@@ -70,6 +74,9 @@ class ExperimentalBackend:
         self._frida = None
         self._unsafe = None
         self.timeout_seconds = 30.0
+        self.attach_timeout_seconds = 15.0
+        self.connection_attempts = 0
+        self._phase = "not_started"
 
     @contextmanager
     def _ledger_lock(self):
@@ -111,25 +118,40 @@ class ExperimentalBackend:
             if hashlib.file_digest(stream, 'sha256').hexdigest() != MAIN_SHA256:
                 raise ValueError('Target differs from researched ARM64 build')
         self._binding = (started, st.st_dev, st.st_ino)
+        session = self._attach_session(frida)
+        try:
+            self._verify_binding()
+        except BaseException:
+            session.detach()  # No business scripts exist yet.
+            raise
+        self._session = session
+        return session
+
+    def _attach_session(self, frida):
+        # Restart policy belongs to the parent, which replaces an unready worker.
+        self._verify_binding()
+        self.connection_attempts = 1
         cancel = frida.Cancellable()
-        timer = threading.Timer(15, cancel.cancel)
+        timer = threading.Timer(self.attach_timeout_seconds, cancel.cancel)
         timer.daemon = True
         timer.start()
-        session = None
         try:
             with cancel:
-                session = frida.get_local_device().attach(self.pid)
-            self._verify_binding()
-            self._session = session
-            return session
-        except BaseException:
-            if session is not None:
-                session.detach()  # No script or callbacks exist at this point.
-            raise
+                self._phase = 'connection.local_device'
+                device = frida.get_local_device()
+                self._phase = 'connection.attach'
+                return device.attach(self.pid)
+        except frida.OperationCancelledError as error:
+            if not cancel.is_cancelled:
+                raise
+            raise NativeConnectionTimeout(
+                'Native connection timed out before any business task was submitted'
+            ) from error
         finally:
             timer.cancel()
 
     def _rpc(self, script, name, *args):
+        self._phase = "native." + name
         cancel = self._frida.Cancellable()
         timer = threading.Timer(self.timeout_seconds, cancel.cancel)
         timer.daemon = True
@@ -152,6 +174,8 @@ class ExperimentalBackend:
         raise TimeoutError('Executor task pending; native buffers remain retained')
 
     def _run(self, mode: str, parameters: dict) -> dict:
+        started = time.monotonic()
+        self._phase = "connection"
         events = []
         event_lock = threading.Lock()
         script = None
@@ -169,7 +193,7 @@ class ExperimentalBackend:
             session = self._ensure_session()
             asset = {'search': 'contact_query_agent.js', 'messages': 'message_list_agent.js',
                      'send': 'send_text_agent.js'}[mode]
-            assets = files('wechat_mcp').joinpath('assets')
+            assets = files('weskill').joinpath('assets')
             source = assets.joinpath(asset).read_text() + '\n' + assets.joinpath('executor_bridge.js').read_text()
             script = session.create_script(source)
             self._scripts.append(script)  # Never unload or detach after task allocation.
@@ -237,6 +261,10 @@ class ExperimentalBackend:
         except Exception as error:
             response['status'] = 'unknown' if submission_possible else 'not_submitted'
             response['errors'].append(f'{type(error).__name__}: {error}')
+            response['failure_stage'] = self._phase
+            response['error_code'] = ('connection_timeout' if isinstance(error, NativeConnectionTimeout)
+                                      else 'operation_cancelled' if type(error).__name__ == 'OperationCancelledError'
+                                      else 'native_operation_failed')
         finally:
             if script is not None:
                 try:
@@ -248,6 +276,9 @@ class ExperimentalBackend:
                     response['errors'].append(f'{self._unsafe}: {error}')
             with event_lock:
                 snapshot = list(events)
+            response['diagnostics'] = {'connection_attempts': self.connection_attempts,
+                                       'elapsed_seconds': round(time.monotonic() - started, 3),
+                                       'server_pid': os.getpid()}
             _save_private(journal, {'mode': mode, 'response': response, 'events': snapshot,
                                     'agent_lifetime': 'until_wechat_exits'})
         return response

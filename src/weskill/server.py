@@ -12,15 +12,15 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
 from .capabilities import capability_report
-from .identity import inspect_identity, discover_client_pid
+from .identity import inspect_identity
 
 
 def create_server(client_path: Path, backend: Any = None) -> FastMCP:
     server = FastMCP(
-        "wechat-mcp",
+        "weskill",
         instructions=(
             "Experimental local Linux WeChat toolbox. Inspect capabilities before use. "
-            "Only diagnostic tools are exposed by default. Native mode adds contact/group search, "
+            "Only diagnostic tools are exposed by default. In native mode ensure_service starts a shared local service, which expires after one idle hour. Native mode adds contact/group search, "
             "allowlisted message queries and text sending. Client success does not confirm delivery."
         ),
         log_level="WARNING",
@@ -40,8 +40,14 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
         report = capability_report()
         if backend is not None:
             report["stage"] = "experimental_hooks"
-            report["available_tools"].extend(["search_contacts", "get_messages", "send_text_message"])
+            report["available_tools"].extend(["ensure_service", "get_service_status", "stop_service",
+                                              "search_contacts", "get_messages", "send_text_message"])
             report["experimental_backend_enabled"] = True
+            report["connection_policy"] = {"max_attempts": 2, "attach_timeout_seconds": 15,
+                                           "retry_scope": "fresh_worker_only_before_business_requests",
+                                           "isolation": "native_worker"}
+            report["service_policy"] = {"idle_timeout_seconds": 3600, "transport": "unix_socket",
+                                        "shared_across_mcp_sessions": True}
             report["business_operations_available"] = True
             enabled = {"get_messages", "list_contacts", "list_groups", "send_private_text", "send_group_text"}
             for operation in report["capabilities"]:
@@ -52,6 +58,25 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
         return report
 
     if backend is not None:
+        @server.tool(annotations=ToolAnnotations(
+            readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False
+        ))
+        def ensure_service() -> dict[str, Any]:
+            """Start or renew the shared local service; expires after one idle hour. Does not send messages or attach by itself."""
+            return backend.ensure_service()
+
+        @server.tool(annotations=readonly)
+        def get_service_status() -> dict[str, Any]:
+            """Read local service state; a request renews its idle deadline. Does not start a stopped service."""
+            return backend.get_service_status()
+
+        @server.tool(annotations=ToolAnnotations(
+            readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False
+        ))
+        def stop_service() -> dict[str, Any]:
+            """Stop the shared service if idle; refuse while an operation or native drain is active."""
+            return backend.stop_service()
+
         @server.tool(annotations=ToolAnnotations(
             readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True
         ))
@@ -92,15 +117,10 @@ def main() -> None:
     if args.enable_experimental_hooks:
         if args.native_shim is None or args.state_dir is None:
             parser.error("Experimental hooks require --native-shim and --state-dir")
-        if args.wechat_pid is None:
-            try:
-                args.wechat_pid = discover_client_pid()
-            except ValueError as error:
-                parser.error(str(error))
         if args.client_path.resolve() != Path("/opt/wechat/wechat"):
             parser.error("Experimental hooks are bound to /opt/wechat/wechat")
-        from .backend import ExperimentalBackend
-        backend = ExperimentalBackend(args.wechat_pid, args.native_shim, args.state_dir, set(args.allow_recipient))
+        from .service_client import ServiceBackend
+        backend = ServiceBackend(args.wechat_pid, args.native_shim, args.state_dir, set(args.allow_recipient))
     create_server(args.client_path, backend=backend).run(transport="stdio")
 
 
