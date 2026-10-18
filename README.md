@@ -13,9 +13,9 @@
   <img alt="Transport: MCP stdio" src="https://img.shields.io/badge/MCP-stdio-192d38">
 </p>
 
-weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 Claude Code 根据自然语言完成一系列微信任务。项目以 `$weskill` 为总入口，配套 `$weskill-group` 群管理与 `$weskill-friends` 好友管理 Skill：它负责理解任务、确定联系人或群、组织调用与解释结果；我们开发的本机 MCP 负责查询和执行，其他兼容 MCP 的助手也可直接接入执行层。
+weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 Claude Code 根据自然语言完成一系列微信任务。项目以 `$weskill` 为总入口，配套群管理、好友管理、表情与朋友圈 Skill：它负责理解任务、确定联系人或群、组织调用与解释结果；我们开发的本机 MCP 负责查询和执行，其他兼容 MCP 的助手也可直接接入执行层。
 
-**能力范围**覆盖联系人、私聊与群聊、消息与媒体、群管理、朋友圈和界面辅助。当前已实现联系人/群搜索、历史消息查询、私聊与群聊文本发送、本地图片和文件发送，以及群成员、建群与邀请、踢出群成员、真实 @、群公告、消息置顶、邀请确认、共享服务管理和持久幂等去重。本地好友资料、备注修改和申请记录读取已通过验证；主动添加与接受申请正在联调，表情、朋友圈与截图仍在研究或计划中，详见下方功能进度。
+**能力范围**覆盖联系人、私聊与群聊、消息与媒体、群管理、朋友圈。当前已实现联系人/群搜索、历史消息查询、私聊与群聊文本发送、本地图片和文件发送，以及群成员、建群与邀请、踢出群成员、真实 @、群公告、消息置顶、邀请确认、共享服务管理和持久幂等去重。本地好友资料、备注修改和申请记录读取已通过验证；主动添加与接受申请已由使用者实测通过；系统表情、表情收藏/搜索入口、朋友圈读取与文字/图片发布已接入，详见下方验证范围。
 
 项目采用 [REA（Reverse Engineer Anything）](https://github.com/morluto/rea) 仓库的 `reverse-engineer-anything` 工作流组织 Linux 微信逆向研究，结合 ELF 静态分析与 Frida 动态验证，寻找可复用的原生调用入口，再将验证通过的能力接入 MCP 与 Skill。目标是在执行微信任务时保持桌面可正常使用：当前业务调用无需移动鼠标、模拟按键或切换窗口焦点。
 
@@ -43,9 +43,9 @@ weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 C
 
 ## Skill 如何组织微信操作
 
-`$weskill` 是总入口，维护完整能力目录并处理搜索、历史和普通文本/媒体发送；群管理任务由同插件的 `$weskill-group` 处理。三个 Skill 复用同一个 MCP 与常驻服务。例如，“查找测试群并查看最近 5 条消息”会先确认可用能力、启动或复用共享服务，再搜索目标并读取指定范围；发送任务还会检查用户意图、目标与正文，并保留幂等键。
+`$weskill` 是总入口，维护完整能力目录并处理搜索、历史和普通文本/媒体发送；群管理任务由同插件的 `$weskill-group` 处理。五个 Skill 复用同一个 MCP 与常驻服务。例如，“查找测试群并查看最近 5 条消息”会先确认可用能力、启动或复用共享服务，再搜索目标并读取指定范围；发送任务还会检查用户意图、目标与正文，并保留幂等键。
 
-好友管理由 `$weskill-friends` 处理，当前验证进度见 [好友管理说明](docs/FRIENDS.md)；表情等能力逐项验证后接入。Skill 负责操作流程，MCP 负责具体执行；安装 Skill 后仍需按下文配置本机 MCP。
+好友管理由 `$weskill-friends` 处理；表情由 `$weskill-emoji` 处理，朋友圈由 `$weskill-moments` 处理。验证范围见 [好友管理](docs/FRIENDS.md)、[表情](docs/EMOJI.md) 和 [朋友圈](docs/MOMENTS.md)。Skill 负责操作流程，MCP 负责具体执行；安装 Skill 后仍需按下文配置本机 MCP。
 
 ## 功能进度
 
@@ -60,7 +60,7 @@ weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 C
 | 好友备注 | `set_contact_remark` | 设置或清空；临时修改与恢复已实测 |
 | 好友申请记录 | `list_friend_requests` | 默认20，自定义数量或全量；返回方向与当前联系人关系 |
 | 新联系人搜索 | `search_new_contact` | 原生网络搜索；不发送申请 |
-| 添加与接受好友 | `add_friend` / `accept_friend_request` | 原生通道已接入，实际好友写入待专用测试帐号验证 |
+| 添加与接受好友 | `add_friend` / `accept_friend_request` | 使用者已确认实际添加、接受操作测试通过 |
 | 联系人和群搜索 | `search_contacts` | 按关键词和自定义条数查询；支持仅搜索群、选择排序 |
 | 聊天记录查询 | `get_messages` | 默认每会话 20 条；自定义数量，或 `0` / `null` 拉全部本机可读记录 |
 | 私聊文本发送 | `send_text_message` | 使用已确认的内部 ID，无需预先登记 |
@@ -74,6 +74,10 @@ weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 C
 | 群公告 | `set_group_announcement` | 发布、编辑完整纯文本公告；空文本清空 |
 | 群消息置顶 | `pin_group_message` | 使用服务器消息 ID 置顶或取消 |
 | 群聊邀请确认 | `set_group_invitation_confirmation` | 开关入群需群主/管理员同意 |
+| 系统表情 | `list_system_emojis` + `send_text_message` | 发现并发送客户端识别的方括号表情代码 |
+| 自定义表情 | `list_saved_stickers` / `search_stickers` / `send_sticker` | 个人收藏与在线搜索两个入口；不添加收藏 |
+| 朋友圈读取 | `get_moments` | 时间线、个人动态、游标分页与独立置顶动态 |
+| 朋友圈发布 | `publish_moments` | 纯文字、本机图片；明确选择仅自己可见或公开 |
 | 发送去重 | 服务内置 | 幂等键持久化，跨进程去重，不确定结果不自动重发 |
 
 私聊、群聊文本发送和历史查询均做过真实客户端验证，客户端重启并重新登录后也完成过查询验证。本地 PNG 图片和文本文件已在私聊与普通群中完成原生发送测试；群成员、建群、邀请、移出成员、真实提及、公告、置顶及邀请确认也已做普通测试群验证。其他格式尚未逐项验证。**客户端返回 `client_success` 即按发送成功处理，无需再回查历史。**
@@ -82,12 +86,10 @@ weskill 是面向 **Linux 原生微信的操作 Skill 项目**，让 Codex 和 C
 
 | 方向 | 计划能力 |
 | --- | --- |
-| 消息与媒体 | 实时消息事件、表情与 GIF |
-| 好友管理联调 | 主动加好友、接受申请及申请状态识别；本地资料、备注和申请记录已验证 |
-| 后续群能力 | 按实际需求扩展更多群设置与管理操作 |
-| 朋友圈与界面 | 读取与发表朋友圈、UI 截图 |
+| 下一步：实时消息 | 消息事件与订阅 |
+| 实时消息之后 | 文档与能力报告收尾、运行资源复用、补充验证、兼容性适配 |
 
-“群聊邀请确认”指入群需要群主或管理员同意。本地媒体已在私聊与普通群验证，群管理已完成普通测试群的原生验证；后续继续扩展表情、好友和朋友圈能力；具体可用状态以服务返回为准。完整范围见 [功能说明](docs/FEATURES.md)。
+“群聊邀请确认”指入群需要群主或管理员同意。本地媒体已在私聊与普通群验证，群管理已完成普通测试群的原生验证；具体表情与朋友圈验证范围见对应功能文档，执行状态以服务返回为准。完整范围见 [功能说明](docs/FEATURES.md)。
 
 ## 快速开始
 
@@ -141,7 +143,7 @@ claude mcp add --transport stdio --scope user weskill -- \
   "$PWD/.venv/bin/python" "$PWD/scripts/run_local_mcp.py"
 ```
 
-重新连接 MCP 或新开会话后，检查是否发现 25 个工具。微信重启后，先停止旧服务再启动；MCP 代码升级后先停止旧服务，再重新连接。启动器自动选择唯一的微信主进程；存在多个匹配进程时会停止并报告歧义。
+重新连接 MCP 或新开会话后，检查是否发现 31 个工具。微信重启后，先停止旧服务再启动；MCP 代码升级后先停止旧服务，再重新连接。启动器自动选择唯一的微信主进程；存在多个匹配进程时会停止并报告歧义。
 
 暂时只想查看客户端识别与功能状态，可将启动命令改成 `.venv/bin/weskill`，进入默认诊断模式，此模式只暴露两个诊断工具，不附加微信。
 
@@ -190,6 +192,10 @@ claude plugin install weskill@weskill-local
 > 使用 `$weskill-group` 查看指定群成员，并 @我指定的两位成员。
 >
 > 用指定好友建群，发布公告，再将指定消息置顶。
+>
+> 用 `$weskill-emoji` 搜索“开心”的表情，选定后发给我指定的好友。
+>
+> 用 `$weskill-moments` 读取最近动态，并将我指定的文字和图片发为仅自己可见的朋友圈。
 
 助手的典型调用顺序是 `get_capabilities` → `ensure_service` → `search_contacts` → `get_messages` 或 `send_text_message`。重名时先确定目标，发送前明确收件人与正文。
 
@@ -218,7 +224,7 @@ MCP 接口以本机 stdio 运行，内部服务使用同用户 Unix socket，没
 
 当前为非官方实验项目，与腾讯、微信、OpenAI 或 Anthropic 无隶属关系。原生代码仍可能影响客户端稳定性；图片缓存桥接实验曾在加载期间遇到客户端退出，原因未确定，该实验已隔离且不属于发布运行路径。当前每次请求的部分桥接资源会留存到微信退出，尚不适合长期无人值守或高频任务。
 
-项目优先研究静默原生调用。未来若某项功能需要 UI 自动化，会先说明原因并由用户决定方案。
+项目采用静默原生调用；界面辅助不在当前开发范围。
 
 ## 参与开发
 
@@ -237,6 +243,7 @@ MCP 接口以本机 stdio 运行，内部服务使用同用户 Unix socket，没
 
 - [Model Context Protocol](https://modelcontextprotocol.io/) 与 [Python SDK](https://github.com/modelcontextprotocol/python-sdk)：工具协议和 stdio 服务实现。
 - [Rprop/ipad 的邀请确认实现](https://github.com/Rprop/ipad/blob/0278be2947eef98cb73f46579bce4428f7e93b96/api/service/groupService.go#L404) 与 [协议定义](https://github.com/Rprop/ipad/blob/0278be2947eef98cb73f46579bce4428f7e93b96/protobuf/wechat_proto/chatRoomAccessVerify.proto#L8)：提供邀请确认字段研究线索，随后在 Linux 原生通道实测。
+- [Pillow](https://pillow.readthedocs.io/en/stable/)：朋友圈图片方向处理、JPEG 上传图和缩略图生成。
 - [Frida 文档](https://frida.re/docs/home/)：本机动态插桩与原生接口调用。
 - [OpenAI 插件打包规范](https://developers.openai.com/plugins/build/plugins) 与 [MCP 接入文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)：Codex 插件与服务接入。
 - [Claude Code 插件规范](https://code.claude.com/docs/en/plugins-reference)、[Marketplace 规范](https://code.claude.com/docs/en/plugin-marketplaces) 与 [Skills](https://code.claude.com/docs/en/skills)：Claude 插件布局与操作流程。

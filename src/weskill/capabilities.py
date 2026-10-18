@@ -25,15 +25,16 @@ _OPERATIONS = (
     ("send_group_text", "发送群聊文本", "message::send_text_message"),
     ("send_image", "发送图片", "message::send_message"),
     ("send_file", "发送文件", "message::send_message"),
-    ("send_emoji", "发送普通Unicode表情", None),
+    ("send_emoji", "发送微信系统表情", None),
     ("send_custom_sticker", "发送自定义表情或GIF", None),
+    ("list_saved_stickers", "读取个人收藏表情", None),
+    ("search_stickers", "在线搜索表情", None),
     ("search_new_contact", "搜索新联系人", None),
     ("add_friend", "主动添加好友", None),
     ("list_friend_requests", "检查好友申请", None),
     ("accept_friend_request", "接受好友申请", None),
     ("publish_moments", "发表朋友圈", "sns::create_moments"),
     ("read_moments", "读取朋友圈", None),
-    ("capture_ui", "UI截图", None),
     ("set_contact_remark", "修改好友备注", None),
     ("get_friend_info", "获取好友信息", "contact::getcontact"),
     ("create_group", "发起群聊", None),
@@ -51,9 +52,11 @@ _OPERATIONS = (
 GROUP_VERIFIED = {"get_group_members", "get_group_info", "create_group", "invite_group_members", "remove_group_members",
                   "mention_group_member", "send_group_announcement", "edit_group_announcement",
                   "pin_group_message", "group_invitation_confirmation"}
-FRIEND_VERIFIED = {"get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact"}
+USER_VERIFIED = {"add_friend", "accept_friend_request"}
+FRIEND_VERIFIED = {"get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact"} | USER_VERIFIED
+SOCIAL_VERIFIED = {"read_moments", "publish_moments", "send_emoji", "list_saved_stickers", "search_stickers", "send_custom_sticker"}
 VERIFIED = {"get_messages", "list_contacts", "list_groups", "send_private_text", "send_group_text",
-            "send_image", "send_file"} | GROUP_VERIFIED | FRIEND_VERIFIED
+            "send_image", "send_file"} | GROUP_VERIFIED | FRIEND_VERIFIED | SOCIAL_VERIFIED
 
 
 def capability_report() -> dict[str, Any]:
@@ -77,9 +80,16 @@ def capability_report() -> dict[str, Any]:
                 "status": "prototype_verified" if name in VERIFIED else "candidate_runtime" if seed else "unverified",
                 "execution_available": False,
                 "evidence": (
+                    [{"kind": "native_runtime_verified",
+                      "source": "docs/MOMENTS.md" if name in ("read_moments", "publish_moments") else "docs/EMOJI.md",
+                      "limitation": "Recorded build; Moments publication tested only with self visibility; consult per-feature validation scope"}]
+                    if name in SOCIAL_VERIFIED else
                     [{"kind": "native_runtime_verified", "source": "docs/GROUPS.md",
                       "limitation": "Ordinary test groups on the recorded build; invitations do not imply acceptance"}]
                     if name in GROUP_VERIFIED else
+                    [{"kind": "user_reported_validation", "source": "docs/FRIENDS.md",
+                      "limitation": "User confirmed real add/accept tests; other builds and account types are not covered"}]
+                    if name in USER_VERIFIED else
                     [{"kind": "native_runtime_verified", "source": "docs/FRIENDS.md",
                       "limitation": "Available local native records on the recorded build; not a remote refresh"}]
                     if name in FRIEND_VERIFIED else [{

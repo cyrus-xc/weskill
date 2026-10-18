@@ -141,6 +141,24 @@ class ServiceBackend:
         return self._call('send_file', {'recipient': recipient_id, 'file_path': str(file_path),
                                         'idempotency_key': idempotency_key})
 
+    def list_saved_stickers(self, limit=20, offset=0):
+        return self._call('list_saved_stickers', {'limit': limit, 'offset': offset})
+
+    def search_stickers(self, keyword, limit=20, cursor=None):
+        return self._call('search_stickers', {'keyword': keyword, 'limit': limit, 'cursor': cursor})
+
+    def send_sticker(self, recipient_id, sticker_id, source, idempotency_key):
+        return self._call('send_sticker', {'recipient': recipient_id, 'sticker_id': sticker_id,
+            'source': source, 'idempotency_key': idempotency_key})
+
+    def get_moments(self, limit=20, cursor=None, contact_id=None, include_xml=False):
+        return self._call('get_moments', {'limit': limit, 'cursor': cursor,
+            'contact_id': contact_id, 'include_xml': include_xml})
+
+    def publish_moments(self, content, visibility, idempotency_key, image_paths=None):
+        return self._call('publish_moments', {'content': content, 'visibility': visibility,
+            'idempotency_key': idempotency_key, 'image_paths': image_paths})
+
     def get_friend_info(self, contact_ids):
         return self._call('get_friend_info', {'contact_ids': contact_ids})
 

@@ -1,0 +1,1258 @@
+[
+  {
+    "code": "[微笑]",
+    "name": "微笑"
+  },
+  {
+    "code": "[撇嘴]",
+    "name": "撇嘴"
+  },
+  {
+    "code": "[色]",
+    "name": "色"
+  },
+  {
+    "code": "[发呆]",
+    "name": "发呆"
+  },
+  {
+    "code": "[得意]",
+    "name": "得意"
+  },
+  {
+    "code": "[流泪]",
+    "name": "流泪"
+  },
+  {
+    "code": "[害羞]",
+    "name": "害羞"
+  },
+  {
+    "code": "[闭嘴]",
+    "name": "闭嘴"
+  },
+  {
+    "code": "[睡]",
+    "name": "睡"
+  },
+  {
+    "code": "[大哭]",
+    "name": "大哭"
+  },
+  {
+    "code": "[尴尬]",
+    "name": "尴尬"
+  },
+  {
+    "code": "[发怒]",
+    "name": "发怒"
+  },
+  {
+    "code": "[调皮]",
+    "name": "调皮"
+  },
+  {
+    "code": "[呲牙]",
+    "name": "呲牙"
+  },
+  {
+    "code": "[惊讶]",
+    "name": "惊讶"
+  },
+  {
+    "code": "[难过]",
+    "name": "难过"
+  },
+  {
+    "code": "[酷]",
+    "name": "酷"
+  },
+  {
+    "code": "[冷汗]",
+    "name": "冷汗"
+  },
+  {
+    "code": "[抓狂]",
+    "name": "抓狂"
+  },
+  {
+    "code": "[吐]",
+    "name": "吐"
+  },
+  {
+    "code": "[偷笑]",
+    "name": "偷笑"
+  },
+  {
+    "code": "[愉快]",
+    "name": "愉快"
+  },
+  {
+    "code": "[白眼]",
+    "name": "白眼"
+  },
+  {
+    "code": "[傲慢]",
+    "name": "傲慢"
+  },
+  {
+    "code": "[饥饿]",
+    "name": "饥饿"
+  },
+  {
+    "code": "[困]",
+    "name": "困"
+  },
+  {
+    "code": "[惊恐]",
+    "name": "惊恐"
+  },
+  {
+    "code": "[流汗]",
+    "name": "流汗"
+  },
+  {
+    "code": "[憨笑]",
+    "name": "憨笑"
+  },
+  {
+    "code": "[悠闲]",
+    "name": "悠闲"
+  },
+  {
+    "code": "[奋斗]",
+    "name": "奋斗"
+  },
+  {
+    "code": "[咒骂]",
+    "name": "咒骂"
+  },
+  {
+    "code": "[疑问]",
+    "name": "疑问"
+  },
+  {
+    "code": "[嘘]",
+    "name": "嘘"
+  },
+  {
+    "code": "[晕]",
+    "name": "晕"
+  },
+  {
+    "code": "[疯了]",
+    "name": "疯了"
+  },
+  {
+    "code": "[衰]",
+    "name": "衰"
+  },
+  {
+    "code": "[骷髅]",
+    "name": "骷髅"
+  },
+  {
+    "code": "[敲打]",
+    "name": "敲打"
+  },
+  {
+    "code": "[再见]",
+    "name": "再见"
+  },
+  {
+    "code": "[擦汗]",
+    "name": "擦汗"
+  },
+  {
+    "code": "[抠鼻]",
+    "name": "抠鼻"
+  },
+  {
+    "code": "[鼓掌]",
+    "name": "鼓掌"
+  },
+  {
+    "code": "[糗大了]",
+    "name": "糗大了"
+  },
+  {
+    "code": "[坏笑]",
+    "name": "坏笑"
+  },
+  {
+    "code": "[左哼哼]",
+    "name": "左哼哼"
+  },
+  {
+    "code": "[右哼哼]",
+    "name": "右哼哼"
+  },
+  {
+    "code": "[哈欠]",
+    "name": "哈欠"
+  },
+  {
+    "code": "[鄙视]",
+    "name": "鄙视"
+  },
+  {
+    "code": "[委屈]",
+    "name": "委屈"
+  },
+  {
+    "code": "[快哭了]",
+    "name": "快哭了"
+  },
+  {
+    "code": "[阴险]",
+    "name": "阴险"
+  },
+  {
+    "code": "[亲亲]",
+    "name": "亲亲"
+  },
+  {
+    "code": "[吓]",
+    "name": "吓"
+  },
+  {
+    "code": "[可怜]",
+    "name": "可怜"
+  },
+  {
+    "code": "[菜刀]",
+    "name": "菜刀"
+  },
+  {
+    "code": "[西瓜]",
+    "name": "西瓜"
+  },
+  {
+    "code": "[啤酒]",
+    "name": "啤酒"
+  },
+  {
+    "code": "[篮球]",
+    "name": "篮球"
+  },
+  {
+    "code": "[乒乓]",
+    "name": "乒乓"
+  },
+  {
+    "code": "[咖啡]",
+    "name": "咖啡"
+  },
+  {
+    "code": "[饭]",
+    "name": "饭"
+  },
+  {
+    "code": "[猪头]",
+    "name": "猪头"
+  },
+  {
+    "code": "[玫瑰]",
+    "name": "玫瑰"
+  },
+  {
+    "code": "[凋谢]",
+    "name": "凋谢"
+  },
+  {
+    "code": "[嘴唇]",
+    "name": "嘴唇"
+  },
+  {
+    "code": "[爱心]",
+    "name": "爱心"
+  },
+  {
+    "code": "[心碎]",
+    "name": "心碎"
+  },
+  {
+    "code": "[蛋糕]",
+    "name": "蛋糕"
+  },
+  {
+    "code": "[闪电]",
+    "name": "闪电"
+  },
+  {
+    "code": "[炸弹]",
+    "name": "炸弹"
+  },
+  {
+    "code": "[刀]",
+    "name": "刀"
+  },
+  {
+    "code": "[足球]",
+    "name": "足球"
+  },
+  {
+    "code": "[瓢虫]",
+    "name": "瓢虫"
+  },
+  {
+    "code": "[便便]",
+    "name": "便便"
+  },
+  {
+    "code": "[月亮]",
+    "name": "月亮"
+  },
+  {
+    "code": "[太阳]",
+    "name": "太阳"
+  },
+  {
+    "code": "[礼物]",
+    "name": "礼物"
+  },
+  {
+    "code": "[拥抱]",
+    "name": "拥抱"
+  },
+  {
+    "code": "[强]",
+    "name": "强"
+  },
+  {
+    "code": "[弱]",
+    "name": "弱"
+  },
+  {
+    "code": "[握手]",
+    "name": "握手"
+  },
+  {
+    "code": "[胜利]",
+    "name": "胜利"
+  },
+  {
+    "code": "[抱拳]",
+    "name": "抱拳"
+  },
+  {
+    "code": "[勾引]",
+    "name": "勾引"
+  },
+  {
+    "code": "[拳头]",
+    "name": "拳头"
+  },
+  {
+    "code": "[差劲]",
+    "name": "差劲"
+  },
+  {
+    "code": "[爱你]",
+    "name": "爱你"
+  },
+  {
+    "code": "[NO]",
+    "name": "NO"
+  },
+  {
+    "code": "[OK]",
+    "name": "OK"
+  },
+  {
+    "code": "[爱情]",
+    "name": "爱情"
+  },
+  {
+    "code": "[飞吻]",
+    "name": "飞吻"
+  },
+  {
+    "code": "[跳跳]",
+    "name": "跳跳"
+  },
+  {
+    "code": "[发抖]",
+    "name": "发抖"
+  },
+  {
+    "code": "[怄火]",
+    "name": "怄火"
+  },
+  {
+    "code": "[转圈]",
+    "name": "转圈"
+  },
+  {
+    "code": "[磕头]",
+    "name": "磕头"
+  },
+  {
+    "code": "[回头]",
+    "name": "回头"
+  },
+  {
+    "code": "[跳绳]",
+    "name": "跳绳"
+  },
+  {
+    "code": "[投降]",
+    "name": "投降"
+  },
+  {
+    "code": "[激动]",
+    "name": "激动"
+  },
+  {
+    "code": "[乱舞]",
+    "name": "乱舞"
+  },
+  {
+    "code": "[献吻]",
+    "name": "献吻"
+  },
+  {
+    "code": "[左太极]",
+    "name": "左太极"
+  },
+  {
+    "code": "[右太极]",
+    "name": "右太极"
+  },
+  {
+    "code": "[微笑\\]",
+    "name": "微笑\\"
+  },
+  {
+    "code": "[撇嘴\\]",
+    "name": "撇嘴\\"
+  },
+  {
+    "code": "[色\\]",
+    "name": "色\\"
+  },
+  {
+    "code": "[發呆\\]",
+    "name": "發呆\\"
+  },
+  {
+    "code": "[得意\\]",
+    "name": "得意\\"
+  },
+  {
+    "code": "[流淚\\]",
+    "name": "流淚\\"
+  },
+  {
+    "code": "[害羞\\]",
+    "name": "害羞\\"
+  },
+  {
+    "code": "[閉嘴\\]",
+    "name": "閉嘴\\"
+  },
+  {
+    "code": "[睡\\]",
+    "name": "睡\\"
+  },
+  {
+    "code": "[大哭\\]",
+    "name": "大哭\\"
+  },
+  {
+    "code": "[尷尬\\]",
+    "name": "尷尬\\"
+  },
+  {
+    "code": "[發怒\\]",
+    "name": "發怒\\"
+  },
+  {
+    "code": "[調皮\\]",
+    "name": "調皮\\"
+  },
+  {
+    "code": "[呲牙\\]",
+    "name": "呲牙\\"
+  },
+  {
+    "code": "[驚訝\\]",
+    "name": "驚訝\\"
+  },
+  {
+    "code": "[難過\\]",
+    "name": "難過\\"
+  },
+  {
+    "code": "[酷\\]",
+    "name": "酷\\"
+  },
+  {
+    "code": "[冷汗\\]",
+    "name": "冷汗\\"
+  },
+  {
+    "code": "[抓狂\\]",
+    "name": "抓狂\\"
+  },
+  {
+    "code": "[吐\\]",
+    "name": "吐\\"
+  },
+  {
+    "code": "[偷笑\\]",
+    "name": "偷笑\\"
+  },
+  {
+    "code": "[愉快\\]",
+    "name": "愉快\\"
+  },
+  {
+    "code": "[白眼\\]",
+    "name": "白眼\\"
+  },
+  {
+    "code": "[傲慢\\]",
+    "name": "傲慢\\"
+  },
+  {
+    "code": "[饑餓\\]",
+    "name": "饑餓\\"
+  },
+  {
+    "code": "[累\\]",
+    "name": "累\\"
+  },
+  {
+    "code": "[驚恐\\]",
+    "name": "驚恐\\"
+  },
+  {
+    "code": "[流汗\\]",
+    "name": "流汗\\"
+  },
+  {
+    "code": "[大笑\\]",
+    "name": "大笑\\"
+  },
+  {
+    "code": "[悠閑\\]",
+    "name": "悠閑\\"
+  },
+  {
+    "code": "[奮鬥\\]",
+    "name": "奮鬥\\"
+  },
+  {
+    "code": "[咒罵\\]",
+    "name": "咒罵\\"
+  },
+  {
+    "code": "[疑問\\]",
+    "name": "疑問\\"
+  },
+  {
+    "code": "[噓\\]",
+    "name": "噓\\"
+  },
+  {
+    "code": "[暈\\]",
+    "name": "暈\\"
+  },
+  {
+    "code": "[瘋了\\]",
+    "name": "瘋了\\"
+  },
+  {
+    "code": "[衰\\]",
+    "name": "衰\\"
+  },
+  {
+    "code": "[骷髏頭\\]",
+    "name": "骷髏頭\\"
+  },
+  {
+    "code": "[敲打\\]",
+    "name": "敲打\\"
+  },
+  {
+    "code": "[再見\\]",
+    "name": "再見\\"
+  },
+  {
+    "code": "[擦汗\\]",
+    "name": "擦汗\\"
+  },
+  {
+    "code": "[摳鼻\\]",
+    "name": "摳鼻\\"
+  },
+  {
+    "code": "[鼓掌\\]",
+    "name": "鼓掌\\"
+  },
+  {
+    "code": "[羞辱\\]",
+    "name": "羞辱\\"
+  },
+  {
+    "code": "[壞笑\\]",
+    "name": "壞笑\\"
+  },
+  {
+    "code": "[左哼哼\\]",
+    "name": "左哼哼\\"
+  },
+  {
+    "code": "[右哼哼\\]",
+    "name": "右哼哼\\"
+  },
+  {
+    "code": "[哈欠\\]",
+    "name": "哈欠\\"
+  },
+  {
+    "code": "[鄙視\\]",
+    "name": "鄙視\\"
+  },
+  {
+    "code": "[委屈\\]",
+    "name": "委屈\\"
+  },
+  {
+    "code": "[快哭了\\]",
+    "name": "快哭了\\"
+  },
+  {
+    "code": "[陰險\\]",
+    "name": "陰險\\"
+  },
+  {
+    "code": "[親親\\]",
+    "name": "親親\\"
+  },
+  {
+    "code": "[嚇\\]",
+    "name": "嚇\\"
+  },
+  {
+    "code": "[可憐\\]",
+    "name": "可憐\\"
+  },
+  {
+    "code": "[菜刀\\]",
+    "name": "菜刀\\"
+  },
+  {
+    "code": "[西瓜\\]",
+    "name": "西瓜\\"
+  },
+  {
+    "code": "[啤酒\\]",
+    "name": "啤酒\\"
+  },
+  {
+    "code": "[籃球\\]",
+    "name": "籃球\\"
+  },
+  {
+    "code": "[乒乓\\]",
+    "name": "乒乓\\"
+  },
+  {
+    "code": "[咖啡\\]",
+    "name": "咖啡\\"
+  },
+  {
+    "code": "[飯\\]",
+    "name": "飯\\"
+  },
+  {
+    "code": "[豬頭\\]",
+    "name": "豬頭\\"
+  },
+  {
+    "code": "[玫瑰\\]",
+    "name": "玫瑰\\"
+  },
+  {
+    "code": "[枯萎\\]",
+    "name": "枯萎\\"
+  },
+  {
+    "code": "[嘴唇\\]",
+    "name": "嘴唇\\"
+  },
+  {
+    "code": "[愛心\\]",
+    "name": "愛心\\"
+  },
+  {
+    "code": "[心碎\\]",
+    "name": "心碎\\"
+  },
+  {
+    "code": "[蛋糕\\]",
+    "name": "蛋糕\\"
+  },
+  {
+    "code": "[閃電\\]",
+    "name": "閃電\\"
+  },
+  {
+    "code": "[炸彈\\]",
+    "name": "炸彈\\"
+  },
+  {
+    "code": "[刀\\]",
+    "name": "刀\\"
+  },
+  {
+    "code": "[足球\\]",
+    "name": "足球\\"
+  },
+  {
+    "code": "[甲蟲\\]",
+    "name": "甲蟲\\"
+  },
+  {
+    "code": "[便便\\]",
+    "name": "便便\\"
+  },
+  {
+    "code": "[月亮\\]",
+    "name": "月亮\\"
+  },
+  {
+    "code": "[太陽\\]",
+    "name": "太陽\\"
+  },
+  {
+    "code": "[禮物\\]",
+    "name": "禮物\\"
+  },
+  {
+    "code": "[擁抱\\]",
+    "name": "擁抱\\"
+  },
+  {
+    "code": "[強\\]",
+    "name": "強\\"
+  },
+  {
+    "code": "[弱\\]",
+    "name": "弱\\"
+  },
+  {
+    "code": "[握手\\]",
+    "name": "握手\\"
+  },
+  {
+    "code": "[勝利\\]",
+    "name": "勝利\\"
+  },
+  {
+    "code": "[抱拳\\]",
+    "name": "抱拳\\"
+  },
+  {
+    "code": "[勾引\\]",
+    "name": "勾引\\"
+  },
+  {
+    "code": "[拳頭\\]",
+    "name": "拳頭\\"
+  },
+  {
+    "code": "[差勁\\]",
+    "name": "差勁\\"
+  },
+  {
+    "code": "[愛你\\]",
+    "name": "愛你\\"
+  },
+  {
+    "code": "[NO\\]",
+    "name": "NO\\"
+  },
+  {
+    "code": "[OK\\]",
+    "name": "OK\\"
+  },
+  {
+    "code": "[愛情\\]",
+    "name": "愛情\\"
+  },
+  {
+    "code": "[飛吻\\]",
+    "name": "飛吻\\"
+  },
+  {
+    "code": "[跳跳\\]",
+    "name": "跳跳\\"
+  },
+  {
+    "code": "[發抖\\]",
+    "name": "發抖\\"
+  },
+  {
+    "code": "[噴火\\]",
+    "name": "噴火\\"
+  },
+  {
+    "code": "[轉圈\\]",
+    "name": "轉圈\\"
+  },
+  {
+    "code": "[磕頭\\]",
+    "name": "磕頭\\"
+  },
+  {
+    "code": "[回頭\\]",
+    "name": "回頭\\"
+  },
+  {
+    "code": "[跳繩\\]",
+    "name": "跳繩\\"
+  },
+  {
+    "code": "[投降\\]",
+    "name": "投降\\"
+  },
+  {
+    "code": "[激動\\]",
+    "name": "激動\\"
+  },
+  {
+    "code": "[亂舞\\]",
+    "name": "亂舞\\"
+  },
+  {
+    "code": "[獻吻\\]",
+    "name": "獻吻\\"
+  },
+  {
+    "code": "[左太極\\]",
+    "name": "左太極\\"
+  },
+  {
+    "code": "[右太極\\]",
+    "name": "右太極\\"
+  },
+  {
+    "code": "[Smile]",
+    "name": "Smile"
+  },
+  {
+    "code": "[Grimace]",
+    "name": "Grimace"
+  },
+  {
+    "code": "[Drool]",
+    "name": "Drool"
+  },
+  {
+    "code": "[Scowl]",
+    "name": "Scowl"
+  },
+  {
+    "code": "[CoolGuy]",
+    "name": "CoolGuy"
+  },
+  {
+    "code": "[Sob]",
+    "name": "Sob"
+  },
+  {
+    "code": "[Shy]",
+    "name": "Shy"
+  },
+  {
+    "code": "[Silent]",
+    "name": "Silent"
+  },
+  {
+    "code": "[Sleep]",
+    "name": "Sleep"
+  },
+  {
+    "code": "[Cry]",
+    "name": "Cry"
+  },
+  {
+    "code": "[Awkward]",
+    "name": "Awkward"
+  },
+  {
+    "code": "[Angry]",
+    "name": "Angry"
+  },
+  {
+    "code": "[Tongue]",
+    "name": "Tongue"
+  },
+  {
+    "code": "[Grin]",
+    "name": "Grin"
+  },
+  {
+    "code": "[Surprise]",
+    "name": "Surprise"
+  },
+  {
+    "code": "[Frown]",
+    "name": "Frown"
+  },
+  {
+    "code": "[Ruthless]",
+    "name": "Ruthless"
+  },
+  {
+    "code": "[Blush]",
+    "name": "Blush"
+  },
+  {
+    "code": "[Scream]",
+    "name": "Scream"
+  },
+  {
+    "code": "[Puke]",
+    "name": "Puke"
+  },
+  {
+    "code": "[Chuckle]",
+    "name": "Chuckle"
+  },
+  {
+    "code": "[Joyful]",
+    "name": "Joyful"
+  },
+  {
+    "code": "[Slight]",
+    "name": "Slight"
+  },
+  {
+    "code": "[Smug]",
+    "name": "Smug"
+  },
+  {
+    "code": "[Hungry]",
+    "name": "Hungry"
+  },
+  {
+    "code": "[Drowsy]",
+    "name": "Drowsy"
+  },
+  {
+    "code": "[Panic]",
+    "name": "Panic"
+  },
+  {
+    "code": "[Sweat]",
+    "name": "Sweat"
+  },
+  {
+    "code": "[Laugh]",
+    "name": "Laugh"
+  },
+  {
+    "code": "[Commando]",
+    "name": "Commando"
+  },
+  {
+    "code": "[Determined]",
+    "name": "Determined"
+  },
+  {
+    "code": "[Scold]",
+    "name": "Scold"
+  },
+  {
+    "code": "[Shocked]",
+    "name": "Shocked"
+  },
+  {
+    "code": "[Shhh]",
+    "name": "Shhh"
+  },
+  {
+    "code": "[Dizzy]",
+    "name": "Dizzy"
+  },
+  {
+    "code": "[Tormented]",
+    "name": "Tormented"
+  },
+  {
+    "code": "[Toasted]",
+    "name": "Toasted"
+  },
+  {
+    "code": "[Skull]",
+    "name": "Skull"
+  },
+  {
+    "code": "[Hammer]",
+    "name": "Hammer"
+  },
+  {
+    "code": "[Wave]",
+    "name": "Wave"
+  },
+  {
+    "code": "[Speechless]",
+    "name": "Speechless"
+  },
+  {
+    "code": "[NosePick]",
+    "name": "NosePick"
+  },
+  {
+    "code": "[Clap]",
+    "name": "Clap"
+  },
+  {
+    "code": "[Shame]",
+    "name": "Shame"
+  },
+  {
+    "code": "[Trick]",
+    "name": "Trick"
+  },
+  {
+    "code": "[Bah！L]",
+    "name": "Bah！L"
+  },
+  {
+    "code": "[Bah！R]",
+    "name": "Bah！R"
+  },
+  {
+    "code": "[Yawn]",
+    "name": "Yawn"
+  },
+  {
+    "code": "[Pooh-pooh]",
+    "name": "Pooh-pooh"
+  },
+  {
+    "code": "[Shrunken]",
+    "name": "Shrunken"
+  },
+  {
+    "code": "[TearingUp]",
+    "name": "TearingUp"
+  },
+  {
+    "code": "[Sly]",
+    "name": "Sly"
+  },
+  {
+    "code": "[Kiss]",
+    "name": "Kiss"
+  },
+  {
+    "code": "[Wrath]",
+    "name": "Wrath"
+  },
+  {
+    "code": "[Whimper]",
+    "name": "Whimper"
+  },
+  {
+    "code": "[Cleaver]",
+    "name": "Cleaver"
+  },
+  {
+    "code": "[Watermelon]",
+    "name": "Watermelon"
+  },
+  {
+    "code": "[Beer]",
+    "name": "Beer"
+  },
+  {
+    "code": "[Basketball]",
+    "name": "Basketball"
+  },
+  {
+    "code": "[PingPong]",
+    "name": "PingPong"
+  },
+  {
+    "code": "[Coffee]",
+    "name": "Coffee"
+  },
+  {
+    "code": "[Rice]",
+    "name": "Rice"
+  },
+  {
+    "code": "[Pig]",
+    "name": "Pig"
+  },
+  {
+    "code": "[Rose]",
+    "name": "Rose"
+  },
+  {
+    "code": "[Wilt]",
+    "name": "Wilt"
+  },
+  {
+    "code": "[Lips]",
+    "name": "Lips"
+  },
+  {
+    "code": "[Heart]",
+    "name": "Heart"
+  },
+  {
+    "code": "[BrokenHeart]",
+    "name": "BrokenHeart"
+  },
+  {
+    "code": "[Cake]",
+    "name": "Cake"
+  },
+  {
+    "code": "[Lightning]",
+    "name": "Lightning"
+  },
+  {
+    "code": "[Bomb]",
+    "name": "Bomb"
+  },
+  {
+    "code": "[Dagger]",
+    "name": "Dagger"
+  },
+  {
+    "code": "[Soccer]",
+    "name": "Soccer"
+  },
+  {
+    "code": "[Ladybug]",
+    "name": "Ladybug"
+  },
+  {
+    "code": "[Poop]",
+    "name": "Poop"
+  },
+  {
+    "code": "[Moon]",
+    "name": "Moon"
+  },
+  {
+    "code": "[Sun]",
+    "name": "Sun"
+  },
+  {
+    "code": "[Gift]",
+    "name": "Gift"
+  },
+  {
+    "code": "[Hug]",
+    "name": "Hug"
+  },
+  {
+    "code": "[ThumbsUp]",
+    "name": "ThumbsUp"
+  },
+  {
+    "code": "[ThumbsDown]",
+    "name": "ThumbsDown"
+  },
+  {
+    "code": "[Shake]",
+    "name": "Shake"
+  },
+  {
+    "code": "[Peace]",
+    "name": "Peace"
+  },
+  {
+    "code": "[Fight]",
+    "name": "Fight"
+  },
+  {
+    "code": "[Beckon]",
+    "name": "Beckon"
+  },
+  {
+    "code": "[Fist]",
+    "name": "Fist"
+  },
+  {
+    "code": "[Pinky]",
+    "name": "Pinky"
+  },
+  {
+    "code": "[RockOn]",
+    "name": "RockOn"
+  },
+  {
+    "code": "[Nuh-uh]",
+    "name": "Nuh-uh"
+  },
+  {
+    "code": "[InLove]",
+    "name": "InLove"
+  },
+  {
+    "code": "[Blowkiss]",
+    "name": "Blowkiss"
+  },
+  {
+    "code": "[Waddle]",
+    "name": "Waddle"
+  },
+  {
+    "code": "[Tremble]",
+    "name": "Tremble"
+  },
+  {
+    "code": "[Aaagh!]",
+    "name": "Aaagh!"
+  },
+  {
+    "code": "[Twirl]",
+    "name": "Twirl"
+  },
+  {
+    "code": "[Kotow]",
+    "name": "Kotow"
+  },
+  {
+    "code": "[Dramatic]",
+    "name": "Dramatic"
+  },
+  {
+    "code": "[JumpRope]",
+    "name": "JumpRope"
+  },
+  {
+    "code": "[Surrender]",
+    "name": "Surrender"
+  },
+  {
+    "code": "[Hooray]",
+    "name": "Hooray"
+  },
+  {
+    "code": "[Meditate]",
+    "name": "Meditate"
+  },
+  {
+    "code": "[Smooch]",
+    "name": "Smooch"
+  },
+  {
+    "code": "[TaiChi L]",
+    "name": "TaiChi L"
+  },
+  {
+    "code": "[TaiChi R]",
+    "name": "TaiChi R"
+  }
+]

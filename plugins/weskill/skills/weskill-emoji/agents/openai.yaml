@@ -1,0 +1,5 @@
+interface:
+  display_name: "weskill 表情"
+  short_description: "WeChat stickers and system expressions"
+  brand_color: "#35C7AE"
+  default_prompt: "Use $weskill-emoji to discover the available native WeChat tools for this task."

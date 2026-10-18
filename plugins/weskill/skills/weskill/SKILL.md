@@ -1,6 +1,6 @@
 ---
 name: weskill
-description: "Orchestrate local Linux WeChat tasks: find contacts or groups, read selected chat history, and send user-authorized text, local images or files through the weskill MCP. Route friend and group administration to the companion skills; discover live capabilities before acting."
+description: "Orchestrate local Linux WeChat tasks: find contacts or groups, read selected chat history, and send user-authorized text, local images or files through the weskill MCP. Route friend/group administration, stickers and Moments to companion skills; discover live capabilities before acting."
 ---
 
 # weskill
@@ -14,6 +14,8 @@ description: "Orchestrate local Linux WeChat tasks: find contacts or groups, rea
 | 连接、能力和服务 | `get_client_identity`、`get_capabilities`、`ensure_service`、`get_service_status`、`stop_service` |
 | 搜索与历史 | `search_contacts`、`get_messages`；由本入口直接处理 |
 | 日常发送 | `send_text_message`、`send_image`、`send_file`；由本入口直接处理 |
+| 系统与自定义表情 | 读取 [weskill-emoji](../weskill-emoji/SKILL.md)，支持个人收藏、在线搜索与发送 |
+| 朋友圈 | 读取 [weskill-moments](../weskill-moments/SKILL.md)，支持时间线、个人动态和文字/图片发布 |
 | 好友资料、备注与申请 | 读取同插件的 [weskill-friends](../weskill-friends/SKILL.md)，按实时工具处理 |
 | 群成员与资料 | `get_group_members`、`get_group_info` |
 | 建群与邀请 | `create_group`、`invite_group_members` |
@@ -21,7 +23,7 @@ description: "Orchestrate local Linux WeChat tasks: find contacts or groups, rea
 | 真实提及与公告 | `send_group_mention`、`set_group_announcement` |
 | 群置顶与邀请确认 | `pin_group_message`、`set_group_invitation_confirmation` |
 
-群管理任务读取同插件的 [weskill-group](../weskill-group/SKILL.md)，按其对应流程执行；两者共用已有 MCP 和服务。目录覆盖已实现工具，执行可用性以实时 `get_capabilities` 为准。好友管理读取同插件的 [weskill-friends](../weskill-friends/SKILL.md)；朋友圈等未开放项如实说明缺口。
+群管理任务读取同插件的 [weskill-group](../weskill-group/SKILL.md)，按其对应流程执行；两者共用已有 MCP 和服务。目录覆盖已实现工具，执行可用性以实时 `get_capabilities` 为准。好友管理读取同插件的 [weskill-friends](../weskill-friends/SKILL.md)。
 
 ## 确定可用能力与目标
 
@@ -55,6 +57,6 @@ description: "Orchestrate local Linux WeChat tasks: find contacts or groups, rea
 
 ## 尚未开放的功能
 
-以实时能力报告为准。目前自定义表情和朋友圈未开放；好友与群管理按能力目录路由。告知缺口，保留用户任务；不要用文本“@名字”冒充提及，也不要把内部注册线索当作可执行工具。
+以实时能力报告为准。当前实时消息订阅尚未开放；表情、朋友圈、好友与群管理按能力目录路由，并检查实时验证状态。告知缺口，保留用户任务；不要用文本“@名字”冒充提及，也不要把内部注册线索当作可执行工具。
 
-原生失败时汇总具体错误。切换 UI 自动化前说明原因并取得用户对方案的同意；微信重启、进程终止或新库加载不作为默认恢复步骤。
+原生失败时汇总具体错误。界面辅助不在当前项目范围；微信重启、进程终止或新库加载不作为默认恢复步骤。

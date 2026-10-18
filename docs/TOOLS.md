@@ -86,7 +86,7 @@
 
 ## 群管理工具
 
-原生模式另提供 `get_group_members`、`get_group_info`、`create_group`、`invite_group_members`、`remove_group_members`、`send_group_mention`、`set_group_announcement`、`pin_group_message`、`set_group_invitation_confirmation`。参数、字段来源及真实验证范围见 [群管理说明](GROUPS.md)。当前开发版本共 25 个工具，默认诊断模式仍为 2 个。
+原生模式另提供 `get_group_members`、`get_group_info`、`create_group`、`invite_group_members`、`remove_group_members`、`send_group_mention`、`set_group_announcement`、`pin_group_message`、`set_group_invitation_confirmation`。参数、字段来源及真实验证范围见 [群管理说明](GROUPS.md)。当前开发版本共 31 个工具，默认诊断模式仍为 2 个。
 
 ## 好友管理
 
@@ -100,3 +100,16 @@
 | `accept_friend_request` | `request_id, idempotency_key, remark=null` | 使用所选申请的原生凭据接受；null保留其备注 |
 
 搜索新联系人、主动添加及接受申请的开发验证进度见 [好友管理说明](FRIENDS.md)。工具列表包含开发中的原生接口；以能力报告的验证状态判断已通过的范围。
+
+## 表情与朋友圈
+
+| 工具 | 参数 | 用途 |
+| --- | --- | --- |
+| `list_system_emojis` | `keyword="", limit=20, offset=0` | 发现原生系统表情代码，使用文本工具发送 |
+| `list_saved_stickers` | `limit=20, offset=0` | 读取个人收藏表情，不添加收藏 |
+| `search_stickers` | `keyword, limit=20, cursor=null` | 微信在线搜索，保留不透明游标续读 |
+| `send_sticker` | `recipient_id, sticker_id, source, idempotency_key` | 发送所选收藏或搜索结果，来源为 saved/search |
+| `get_moments` | `limit=20, cursor=null, contact_id=null, include_xml=false` | 时间线或个人动态，置顶单独返回 |
+| `publish_moments` | `content, visibility, idempotency_key, image_paths=[]` | 发布文字和/或本机图片，private仅自己可见/public好友可见 |
+
+列表默认20，支持自定义条数；0/null跟随全部当前可访问记录。微信可见权限、缓存和分页中止会明确报告。字段与验证范围见 [表情](EMOJI.md) 和 [朋友圈](MOMENTS.md)。

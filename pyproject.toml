@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "weskill"
-version = "0.3.0"
+version = "0.4.0"
 description = "Linux WeChat operation skill backed by an experimental local MCP"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
-dependencies = ["mcp>=1.28,<2", "pyelftools>=0.33,<1"]
+dependencies = ["mcp>=1.28,<2", "pyelftools>=0.33,<1", "Pillow>=11,<13"]
 
 [project.urls]
 Repository = "https://github.com/cyrus-xc/weskill"
@@ -26,4 +26,4 @@ weskill = "weskill.server:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-weskill = ["assets/*.js"]
+weskill = ["assets/*.js", "assets/*.json"]

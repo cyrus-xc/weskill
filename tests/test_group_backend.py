@@ -165,7 +165,7 @@ class GroupToolContractTests(unittest.IsolatedAsyncioTestCase):
         from weskill.server import create_server
         server = create_server(Path('/nonexistent/fixture-client'), backend=object())
         tools = {tool.name: tool for tool in await server.list_tools()}
-        self.assertEqual(len(tools), 25)
+        self.assertEqual(len(tools), 31)
         for name, required in [('remove_group_members', {'group_id', 'member_ids', 'idempotency_key'})]:
             tool = tools[name]
             self.assertFalse(tool.annotations.readOnlyHint)

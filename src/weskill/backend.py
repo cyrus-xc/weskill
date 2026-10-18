@@ -194,7 +194,8 @@ class ExperimentalBackend:
             asset = {'search': 'contact_query_agent.js', 'messages': 'message_list_agent.js',
                      'send': 'send_text_agent.js', 'media': 'media_send_agent.js', 'group': 'group_agent.js', 'mention': 'mention_agent.js',
                      'friend_profile': 'friend_profile_agent.js', 'friend_remark': 'friend_remark_agent.js',
-                     'friend_request': 'friend_request_agent.js'}[mode]
+                     'friend_request': 'friend_request_agent.js', 'emoji_query': 'emoji_query_agent.js', 'emoji_send': 'emoji_send_agent.js',
+                     'moments_read': 'moments_read_agent.js', 'moments_publish': 'moments_publish_agent.js'}[mode]
             assets = files('weskill').joinpath('assets')
             source = assets.joinpath(asset).read_text() + '\n' + assets.joinpath('executor_bridge.js').read_text()
             script = session.create_script(source)
@@ -213,7 +214,7 @@ class ExperimentalBackend:
             if len(noops) != 1 or noops[0].get('tid') != int(noop['tid']):
                 raise RuntimeError('Executor TID evidence differs')
             tid = int(noop['tid'])
-            if mode in ('search', 'messages', 'media', 'group', 'friend_profile', 'friend_remark', 'friend_request'):
+            if mode in ('search', 'messages', 'media', 'group', 'friend_profile', 'friend_remark', 'friend_request', 'emoji_query', 'emoji_send', 'moments_read', 'moments_publish'):
                 task = self._rpc(script, 'prepare', tid, parameters)
             elif mode == 'mention':
                 task = self._rpc(script, 'prepare', tid, parameters['group_id'], parameters['text'],
@@ -242,7 +243,8 @@ class ExperimentalBackend:
                 kind = {'search': 'contact_query_result', 'messages': 'message_list_result',
                         'send': 'text_send_result', 'media': 'media_send_result', 'group': 'group_result', 'mention': 'text_send_result',
                         'friend_profile': 'friend_profile_result', 'friend_remark': 'friend_remark_result',
-                        'friend_request': 'friend_request_result'}[mode]
+                        'friend_request': 'friend_request_result', 'emoji_query': 'emoji_query_result', 'emoji_send': 'emoji_send_result',
+                        'moments_read': 'moments_read_result', 'moments_publish': 'moments_publish_result'}[mode]
                 payloads = [m.get('payload', {}) for m in events if m.get('type') == 'send'
                             and m.get('payload', {}).get('kind') == kind]
             healthy = (state and state.get('invoked') and state.get('completed')
@@ -253,8 +255,11 @@ class ExperimentalBackend:
                 # Native message ids are 64-bit JSON numbers; Python parses the
                 # untouched serialization rather than Frida's rounded JS Number.
                 native_result = (json.loads(payload['raw_json'])
-                                 if mode in ('messages', 'media', 'send', 'mention') and payload.get('raw_json')
+                                 if mode in ('messages', 'media', 'send', 'mention', 'moments_publish') and payload.get('raw_json')
                                  else payload.get('result'))
+                if mode == 'moments_publish' and parameters.get('images') and state.get('mediaModelTransfers') != 1:
+                    native_result = {'success': False, 'submission_unknown': True,
+                                     'error_message': 'Native image model transfer was not established'}
                 response['result'] = self._string_message_ids(native_result)
                 response['errors'] = [payload['error']] if payload.get('error') else []
                 if isinstance(native_result, dict) and native_result.get('not_submitted') is True:
@@ -323,8 +328,19 @@ class ExperimentalBackend:
     @staticmethod
     def _string_message_ids(value):
         if isinstance(value, dict):
-            return {k: str(v) if k in ('svr_id', 'message_id') and type(v) is int
-                    else ExperimentalBackend._string_message_ids(v) for k, v in value.items()}
+            result = {}
+            for key, item in value.items():
+                if key in ('sns_id', 'moment_id') and isinstance(item, str) and item.startswith('-') and item[1:].isascii() and item[1:].isdecimal() and -(2**63) <= int(item) < 0:
+                    item = int(item)
+                if key in ('svr_id', 'message_id', 'sns_id', 'moment_id') and type(item) is int:
+                    # SNS's JSON writer emits signed int64 while timeline IDs
+                    # are uint64. Keep the same exact decimal identity in both.
+                    if key in ('sns_id', 'moment_id') and -(2**63) <= item < 0:
+                        item += 2**64
+                    result[key] = str(item)
+                else:
+                    result[key] = ExperimentalBackend._string_message_ids(item)
+            return result
         if isinstance(value, list):
             return [ExperimentalBackend._string_message_ids(v) for v in value]
         return value
@@ -474,6 +490,136 @@ class ExperimentalBackend:
                 response.update(self._run('media', prepared['parameters']))
             except Exception as error:
                 response.update(status='unknown' if submission_possible else 'not_submitted',
+                                errors=[f'{type(error).__name__}: {error}'])
+            response['retry_allowed'] = response['status'] == 'not_submitted'
+            _save_private(ledger, record)
+            return response
+
+    def _sticker_query(self, parameters):
+        from .stickers import remember_stickers
+        response = self._run('emoji_query', parameters)
+        if response['status'] == 'client_success':
+            remember_stickers(self.state_dir, response['result'], parameters)
+        return response
+
+    def list_saved_stickers(self, limit: int | None = 20, offset: int = 0) -> dict:
+        if not valid_limit(limit) or type(offset) is not int or offset < 0:
+            raise ValueError('Expected a nonnegative limit and offset')
+        with self._lock, self._ledger_lock():
+            return self._sticker_query({'operation': 'list_saved_stickers',
+                                        'limit': limit, 'offset': offset})
+
+    def search_stickers(self, keyword: str, limit: int | None = 20,
+                        cursor: str | None = None) -> dict:
+        from .stickers import search_stickers
+        if not valid_chat_id(keyword) or not valid_limit(limit):
+            raise ValueError('Expected a keyword and nonnegative limit')
+        keyword.encode('utf-8')
+        with self._lock, self._ledger_lock():
+            return search_stickers(self._sticker_query, self.state_dir, keyword, limit, cursor)
+
+    def send_sticker(self, recipient: str, sticker_id: str, source: str,
+                     idempotency_key: str) -> dict:
+        from .stickers import selected_parameters, wait_for_material
+        if not valid_chat_id(recipient) or not valid_chat_id(sticker_id) or source not in ('saved', 'search'):
+            raise ValueError('Expected recipient ID, selected sticker ID and saved/search source')
+        if not isinstance(idempotency_key, str) or not idempotency_key:
+            raise ValueError('A nonempty idempotency key is required')
+        parameters = {'recipient': recipient, 'sticker_id': sticker_id, 'source': source}
+        ledger = self.state_dir / ('send-' + hashlib.sha256(idempotency_key.encode()).hexdigest() + '.json')
+        with self._lock, self._ledger_lock():
+            if ledger.exists():
+                old = json.loads(ledger.read_text())
+                if old.get('kind') != 'sticker' or old.get('parameters') != parameters:
+                    raise ValueError('Idempotency key already belongs to a different operation')
+                if old['response']['status'] != 'not_submitted':
+                    return old['response']
+            response = {'status': 'not_submitted', 'result': None, 'idempotency_key': idempotency_key,
+                        'retry_allowed': True, 'delivery_confirmed': False, 'errors': []}
+            record = {'kind': 'sticker', 'parameters': parameters, 'response': response}
+            _save_private(ledger, record)
+            submitted = False
+            try:
+                prepared = {'parameters': selected_parameters(self.state_dir, recipient, sticker_id, source)}
+                mode = 'emoji_send'
+                record['media'] = prepared
+                response.update(status='unknown', retry_allowed=False)
+                _save_private(ledger, record)
+                submitted = True
+                response.update(self._run(mode, prepared['parameters']))
+                pending = response.get('result') or {}
+                if response['status'] == 'not_submitted' and pending.get('material_pending'):
+                    # This first task only queued material, before MessageManager.
+                    # Its explicit not_submitted status permits the actual send
+                    # after the client cache becomes ready. Never retry unknown.
+                    submitted = False
+                    _save_private(ledger, record)
+                    if wait_for_material(pending.get('expected_local_path'), self.timeout_seconds):
+                        response.update(status='unknown', retry_allowed=False)
+                        _save_private(ledger, record)
+                        submitted = True
+                        response.update(self._run(mode, prepared['parameters']))
+            except Exception as error:
+                response.update(status='unknown' if submitted else 'not_submitted',
+                                errors=[f'{type(error).__name__}: {error}'])
+            response['retry_allowed'] = response['status'] == 'not_submitted'
+            _save_private(ledger, record)
+            return response
+
+    def get_moments(self, limit: int | None = 20, cursor: str | None = None,
+                    contact_id: str | None = None, include_xml: bool = False) -> dict:
+        from .moments import read_moments
+        if not valid_limit(limit) or type(include_xml) is not bool:
+            raise ValueError('Expected a nonnegative limit and boolean include_xml')
+        if contact_id is not None and not valid_chat_id(contact_id):
+            raise ValueError('Expected a contact ID')
+        with self._lock, self._ledger_lock():
+            return read_moments(self._run, limit, cursor, contact_id, include_xml)
+
+    def publish_moments(self, content: str, visibility: str, idempotency_key: str,
+                        image_paths: list[str] | None = None) -> dict:
+        from .media import file_identity, _cache_root, _month
+        from .moments import prepare_images
+        if not isinstance(content, str) or '\0' in content or visibility not in ('public', 'private'):
+            raise ValueError('Expected content and explicit public/private visibility')
+        if image_paths is None:
+            image_paths = []
+        if not isinstance(image_paths, list) or not all(isinstance(p, str) and p for p in image_paths):
+            raise ValueError('Expected local image paths')
+        if not content and not image_paths:
+            raise ValueError('Expected content or images')
+        if not isinstance(idempotency_key, str) or not idempotency_key:
+            raise ValueError('A nonempty idempotency key is required')
+        content.encode('utf-8')
+        paths = [str(Path(path).expanduser().resolve()) for path in image_paths]
+        parameters = {'content': content, 'visibility': visibility, 'image_paths': paths}
+        ledger = self.state_dir / ('send-' + hashlib.sha256(idempotency_key.encode()).hexdigest() + '.json')
+        with self._lock, self._ledger_lock():
+            if ledger.exists():
+                old = json.loads(ledger.read_text())
+                if old.get('kind') != 'moments' or old.get('parameters') != parameters:
+                    raise ValueError('Idempotency key already belongs to a different operation')
+                for path, previous in zip(paths if 'sources' in old else [], old.get('sources', []), strict=True):
+                    if Path(path).is_file() and file_identity(path)['sha256'] != previous['sha256']:
+                        raise ValueError('Source image changed for this idempotency key')
+                if old['response']['status'] != 'not_submitted':
+                    return self._string_message_ids(old['response'])
+            response = {'status': 'not_submitted', 'result': None, 'idempotency_key': idempotency_key,
+                        'retry_allowed': True, 'delivery_confirmed': False, 'errors': []}
+            record = {'kind': 'moments', 'parameters': parameters, 'response': response}
+            submitted = False
+            try:
+                sources = [file_identity(path) for path in paths]
+                record['sources'] = sources
+                _save_private(ledger, record)
+                images = prepare_images(paths, _cache_root(self.pid) / _month(), idempotency_key, sources) if paths else []
+                response.update(status='unknown', retry_allowed=False)
+                _save_private(ledger, record)
+                submitted = True
+                response.update(self._run('moments_publish', {'content': content,
+                    'visibility': visibility, 'images': images}))
+            except Exception as error:
+                response.update(status='unknown' if submitted else 'not_submitted',
                                 errors=[f'{type(error).__name__}: {error}'])
             response['retry_allowed'] = response['status'] == 'not_submitted'
             _save_private(ledger, record)

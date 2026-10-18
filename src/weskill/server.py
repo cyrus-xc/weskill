@@ -6,7 +6,7 @@ src/mcp/server/fastmcp/server.py; annotations are protocol hints, not security.
 
 import argparse
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
@@ -21,7 +21,7 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
         instructions=(
             "Experimental local Linux WeChat toolbox. Inspect capabilities before use. "
             "Only diagnostic tools are exposed by default. In native mode ensure_service starts a shared local service, which expires after one idle hour. Native mode adds contact/group search, "
-            "message queries and user-authorized text, local image and file sending. Native group management shares the same service. Client success is the success criterion."
+            "message queries and user-authorized text, local image and file sending. Friend and group management, system/custom stickers and Moments share the same service. Client success is the success criterion."
         ),
         log_level="WARNING",
     )
@@ -45,7 +45,7 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
                 "get_group_members", "get_group_info", "create_group", "invite_group_members",
                 "send_group_mention", "set_group_announcement", "pin_group_message",
                 "set_group_invitation_confirmation", "remove_group_members",
-                                              "get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact", "add_friend", "accept_friend_request"])
+                                              "get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact", "add_friend", "accept_friend_request", "list_system_emojis", "list_saved_stickers", "search_stickers", "send_sticker", "get_moments", "publish_moments"])
             report["experimental_backend_enabled"] = True
             report["connection_policy"] = {"max_attempts": 2, "attach_timeout_seconds": 15,
                                            "retry_scope": "fresh_worker_only_before_business_requests",
@@ -61,7 +61,7 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
             enabled = {"get_messages", "list_contacts", "list_groups", "send_private_text", "send_group_text", "send_image", "send_file", "get_group_members", "get_group_info",
                        "create_group", "invite_group_members", "mention_group_member", "send_group_announcement",
                        "edit_group_announcement", "pin_group_message", "group_invitation_confirmation",
-                       "remove_group_members", "get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact", "add_friend", "accept_friend_request"}
+                       "remove_group_members", "get_friend_info", "set_contact_remark", "list_friend_requests", "search_new_contact", "add_friend", "accept_friend_request", "send_emoji", "list_saved_stickers", "search_stickers", "send_custom_sticker", "read_moments", "publish_moments"}
             for operation in report["capabilities"]:
                 if operation["id"] in enabled:
                     operation["execution_available"] = True
@@ -134,6 +134,42 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
 
         group_destructive = ToolAnnotations(readOnlyHint=False, destructiveHint=True,
                                             idempotentHint=True, openWorldHint=True)
+
+        @server.tool(annotations=group_read)
+        def list_system_emojis(keyword: str = '', limit: int | None = 20,
+                               offset: int = 0) -> dict[str, Any]:
+            """List native system-expression tokens such as [微笑]. Send a chosen token with send_text_message. Default 20; 0/null returns all matching tokens."""
+            from .emoji import system_emojis
+            return system_emojis(keyword, limit, offset)
+
+        @server.tool(annotations=group_read)
+        def list_saved_stickers(limit: int | None = 20, offset: int = 0) -> dict[str, Any]:
+            """List personal favourite stickers with source=saved and selectable sticker_id. Does not add favourites. Default 20; 0/null returns all; no toolkit count cap."""
+            return backend.list_saved_stickers(limit, offset)
+
+        @server.tool(annotations=group_read)
+        def search_stickers(keyword: str, limit: int | None = 20,
+                            cursor: str | None = None) -> dict[str, Any]:
+            """Search custom stickers online through WeChat. Use next_cursor with the same keyword for stable continuation. source=search; no favourite is added. Default 20; 0/null follows all available native pages."""
+            return backend.search_stickers(keyword, limit, cursor)
+
+        @server.tool(annotations=group_write)
+        def send_sticker(recipient_id: str, sticker_id: str, source: Literal["saved", "search"],
+                          idempotency_key: str) -> dict[str, Any]:
+            """Send a sticker selected from saved/search results. The client downloads its material if needed without adding it to favourites. Native client_success is sufficient. Preserve the key after timeout; unknown never resends."""
+            return backend.send_sticker(recipient_id, sticker_id, source, idempotency_key)
+
+        @server.tool(annotations=group_read)
+        def get_moments(limit: int | None = 20, cursor: str | None = None,
+                        contact_id: str | None = None, include_xml: bool = False) -> dict[str, Any]:
+            """Read the native Moments timeline, or a specific contact's posts. Default 20; 0/null follows all accessible pages. Preserve opaque next_cursor and its contact scope. Top posts are separate. Access is decided by WeChat; all means accessible pages, not every historical post."""
+            return backend.get_moments(limit, cursor, contact_id, include_xml)
+
+        @server.tool(annotations=group_write)
+        def publish_moments(content: str, visibility: Literal["private", "public"], idempotency_key: str,
+                            image_paths: list[str] | None = None) -> dict[str, Any]:
+            """Publish text and/or local images. visibility is explicit: private means only self; public means friends allowed by WeChat. Preserve content, paths, visibility and key after timeout. Client success confirms publication; unknown never republishes."""
+            return backend.publish_moments(content, visibility, idempotency_key, image_paths)
 
         @server.tool(annotations=group_read)
         def get_friend_info(contact_ids: list[str]) -> dict[str, Any]:

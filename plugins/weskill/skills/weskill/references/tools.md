@@ -10,7 +10,7 @@
 | `search_contacts` | `keywords`、`limit`、`groups_only`、`sort_by_time` | 关键词数量和长度无工具箱上限；自定义结果条数和排序 |
 | `get_messages` | `chat_ids`、`limit=20`、`include_xml=false` | 批量数量不设上限；任意正整数条数，`0` / `null` 拉全部本机可读历史 |
 | `send_text_message` | `recipient_id`、`text`、`idempotency_key` | 使用已确认的内部 ID，无需预登记；正文和幂等键没有工具箱长度上限 |
-| `send_image` | `recipient_id`、`file_path`、`idempotency_key` | 发送本机图片；私聊已验证，群媒体尚未实测 |
+| `send_image` | `recipient_id`、`file_path`、`idempotency_key` | 发送本机图片；私聊与普通群已验证 |
 | `send_file` | `recipient_id`、`file_path`、`idempotency_key` | 发送本机文件；无工具箱大小或扩展名白名单 |
 
 搜索成功时从 `result.chat_list` 读取目标，核对 `chat_id`、可用名称及结果数量。读取历史消息时保留 `svr_id` 十进制字符串。
