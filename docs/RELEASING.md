@@ -19,15 +19,18 @@ python tools/smoke_npm.py dist/weskill-0.4.2.tgz
 
 ## 首次 npm 发布
 
-`npm trust` 要求包已存在，因此先用维护者账号完成一次公开发布，再配置 OIDC。发布前确保版本、公开文件和 tarball 校验通过：
+`npm trust` 要求包已存在。首次注册时，先从独立目录发布最小的 `0.0.0` 初始化包，使用 `bootstrap` 标签而非 `latest`；不改主项目的版本号，也不把业务源码或本地文件放进该初始化包。然后配置可信发布者，让正式版本由 Actions 首发。
 
 ```bash
 npm login
-npm publish dist/weskill-0.4.2.tgz --access public --ignore-scripts
+# 独立初始化目录只含公开的 package.json、README 和 LICENSE
+npm publish .state/npm-bootstrap --tag bootstrap --access public --ignore-scripts
 npm trust github weskill --repo cyrus-xc/weskill --file publish.yml --allow-publish --yes
 ```
 
-维护者自行完成 npm 登录与需要的双因素验证；不把令牌写进仓库或聊天。可信发布者绑定仓库 `cyrus-xc/weskill` 与 workflow 文件 `publish.yml`，允许直接 publish。流水线只用 GitHub OIDC，不配置长期 `NPM_TOKEN`。
+维护者自行完成 npm 登录与需要的双因素验证；不把令牌写进仓库或聊天。可信发布者绑定仓库 `cyrus-xc/weskill` 与 workflow 文件 `publish.yml`，允许直接 publish。流水线只用 GitHub OIDC，不配置长期 `NPM_TOKEN`。新配置应在 npm 规定期限内完成首次 OIDC 发布；首次自动发布成功才证明整条认证路径可用。
+
+正式版本使用默认的 `latest` 标签。初始化版本没有 CLI，不用于安装或测试正式业务。
 
 ## 日常流水线
 
