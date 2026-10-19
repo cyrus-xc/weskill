@@ -79,6 +79,14 @@ class ExperimentalBackend:
         self.attach_timeout_seconds = 15.0
         self.connection_attempts = 0
         self._phase = "not_started"
+        self._native_budget_managed = False
+        self._request_budget = None
+
+    def _native_operation(self, mode):
+        from .request_budget import NativeRequestBudget
+        if self._request_budget is None:
+            self._request_budget=NativeRequestBudget()
+        return self._request_budget.operation(mode)
 
     @contextmanager
     def _ledger_lock(self):
@@ -166,16 +174,26 @@ class ExperimentalBackend:
 
     def _wait_idle(self, script, invokes):
         deadline = time.monotonic() + self.timeout_seconds
+        delay = 0.05
         while time.monotonic() < deadline:
             state = self._rpc(script, 'bridge_status')
             if state['idle'] and int(state['invokes']) >= invokes:
                 if int(state['allocations']) != int(state['frees']):
                     raise RuntimeError('Native executor allocation accounting differs')
                 return state
-            time.sleep(0.05)
+            time.sleep(min(delay,max(0,deadline-time.monotonic())))
+            delay = min(1.0,delay*2)
         raise TimeoutError('Executor task pending; native buffers remain retained')
 
     def _run(self, mode: str, parameters: dict) -> dict:
+        if self._native_budget_managed:
+            return self._run_native(mode,parameters)
+        with self._native_operation(mode) as receipt:
+            response=self._run_native(mode,parameters)
+            response['rate_limit']=receipt
+            return response
+
+    def _run_native(self, mode: str, parameters: dict) -> dict:
         started = time.monotonic()
         self._phase = "connection"
         events = []
@@ -240,13 +258,15 @@ class ExperimentalBackend:
             if executor['tid'] != noop['tid']:
                 raise RuntimeError('Executor task ran on a different thread')
             deadline = time.monotonic() + self.timeout_seconds
+            delay = 0.05
             while time.monotonic() < deadline:
                 state = self._rpc(script, 'status')
                 if state.get('completed') and (mode in ('send', 'media', 'mention') or state.get('destroyed')):
                     break
                 if state.get('errors'):
                     break
-                time.sleep(0.05)
+                time.sleep(min(delay,max(0,deadline-time.monotonic())))
+                delay = min(1.0,delay*2)
             response['agent_state'] = state
             with event_lock:
                 kind = {'search': 'contact_query_result', 'messages': 'message_list_result',
@@ -653,12 +673,13 @@ class ExperimentalBackend:
         with self._lock, self._ledger_lock():
             return self._run('friend_profile', {'contact_ids': contact_ids})
 
-    def list_friend_requests(self, limit: int | None = 20, offset: int = 0) -> dict:
-        if not valid_limit(limit) or type(offset) is not int or offset < 0:
+    def list_friend_requests(self, limit: int | None = 20, offset: int = 0,
+                             include_contact_status: bool = True) -> dict:
+        if not valid_limit(limit) or type(offset) is not int or offset < 0 or type(include_contact_status) is not bool:
             raise ValueError('Expected a nonnegative offset and limit (0/null reads all)')
         with self._lock, self._ledger_lock():
             return self._run('friend_request', {'operation': 'list_friend_requests',
-                'limit': limit, 'offset': offset})
+                'limit': limit, 'offset': offset, 'include_contact_status': include_contact_status})
 
     def search_new_contact(self, query: str) -> dict:
         if not valid_chat_id(query):

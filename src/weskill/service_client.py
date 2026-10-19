@@ -162,8 +162,9 @@ class ServiceBackend:
     def get_friend_info(self, contact_ids):
         return self._call('get_friend_info', {'contact_ids': contact_ids})
 
-    def list_friend_requests(self, limit=20, offset=0):
-        return self._call('list_friend_requests', {'limit': limit, 'offset': offset})
+    def list_friend_requests(self, limit=20, offset=0, include_contact_status=True):
+        return self._call('list_friend_requests', {'limit': limit, 'offset': offset,
+                          'include_contact_status': include_contact_status})
 
     def search_new_contact(self, query):
         return self._call('search_new_contact', {'query': query})

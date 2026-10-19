@@ -38,8 +38,8 @@ function requestRelation(id){
  // Same bit admitted by native contact::search_contacts at 0x6c93094.
  return {is_contact:(flags&1)!==0,native_contact_flag:flags};
 }
-function requestPublic(row){
- const value=Object.assign({},row,requestRelation(row.user_id));
+function requestPublic(row,includeContactStatus=true){
+ const value=Object.assign({},row,includeContactStatus?requestRelation(row.user_id):{is_contact:null,native_contact_flag:null});
  value.direction=row.is_sender?'outgoing':'incoming';
  // A current contact is established; other records may have expired or were
  // declined elsewhere, so absence from contacts does not establish pending.
@@ -117,7 +117,7 @@ function requestAdd(parameters){
 function requestDispatch(parameters){
  if(parameters.operation==='list_friend_requests'){
   const rows=requestRecords(),offset=parameters.offset||0,limit=parameters.limit;const selected=limit===0||limit===null?rows.slice(offset):rows.slice(offset,offset+limit);
-  return {success:true,requests:selected.map(requestPublic),total:rows.length,offset,returned:selected.length,has_more:offset+selected.length<rows.length,source:'local_native_fmessage'};
+  return {success:true,requests:selected.map(row=>requestPublic(row,parameters.include_contact_status!==false)),total:rows.length,offset,returned:selected.length,has_more:offset+selected.length<rows.length,source:'local_native_fmessage'};
  }
  if(parameters.operation==='search_new_contact'){try{const target=requestSearch(parameters.query);target.verification_ticket_available=!!target.ticket;delete target.ticket;return {success:target.success,target:target,source:'native_searchcontact'};}catch(error){return {success:false,error_message:String(error),stage:requestState.stage,source:'native_searchcontact'};}}
  if(parameters.operation==='accept_friend_request')return requestAccept(parameters);

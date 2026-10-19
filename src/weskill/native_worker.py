@@ -13,6 +13,8 @@ def emit(value):
 def main():
     config = json.loads(sys.stdin.readline())
     backend = ExperimentalBackend(config['pid'], config['shim_path'], config['state_dir'])
+    # The parent reserved the same user's global budget immediately before write.
+    backend._native_budget_managed = config.get('budget_managed') is True
     try:
         backend._ensure_session()
     except Exception as error:

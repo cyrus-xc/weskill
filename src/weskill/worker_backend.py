@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import contextlib
 import selectors
 import subprocess
 import sys
@@ -67,23 +68,25 @@ class WorkerBackend(ExperimentalBackend):
             self._worker = None
         for attempt in (1, 2):
             self.connection_attempts = attempt
-            worker = subprocess.Popen(self._worker_command(), stdin=subprocess.PIPE,
-                                      stdout=subprocess.PIPE, text=True, bufsize=1)
-            try:
-                self._write(worker, {'pid': self.pid, 'shim_path': str(self.shim_path),
-                    'state_dir': str(self.state_dir / 'native')})
-                ready = self._read(worker, self.startup_timeout_seconds)
-                if ready.get('ready') is True:
-                    self._worker = worker
-                    return worker
-                if ready.get('error_code') != 'connection_timeout':
-                    raise RuntimeError(ready.get('error', 'Native worker initialization failed'))
-            except (TimeoutError, EOFError):
-                pass  # No operation has been sent, so replacing this worker is safe.
-            except BaseException:
+            with self._native_operation('connection'):
+                # Failed bootstraps must not bypass the budget and attach in a loop.
+                worker = subprocess.Popen(self._worker_command(), stdin=subprocess.PIPE,
+                                          stdout=subprocess.PIPE, text=True, bufsize=1)
+                try:
+                    self._write(worker, {'pid': self.pid, 'shim_path': str(self.shim_path),
+                        'state_dir': str(self.state_dir / 'native'), 'budget_managed': True})
+                    ready = self._read(worker, self.startup_timeout_seconds)
+                    if ready.get('ready') is True:
+                        self._worker = worker
+                        return worker
+                    if ready.get('error_code') != 'connection_timeout':
+                        raise RuntimeError(ready.get('error', 'Native worker initialization failed'))
+                except (TimeoutError, EOFError):
+                    pass  # No operation has been sent, so replacing this worker is safe.
+                except BaseException:
+                    self._stop_unready(worker)
+                    raise
                 self._stop_unready(worker)
-                raise
-            self._stop_unready(worker)
         raise NativeConnectionTimeout(
             'Native connection timed out in two fresh workers before any business '
             'request was sent; reconnect MCP and preserve sending records.')
@@ -123,6 +126,10 @@ class WorkerBackend(ExperimentalBackend):
                 pass  # A possibly pending native task is never forcibly killed.
 
     def _run(self, mode, parameters):
+        with contextlib.ExitStack() as gate_scope:
+            return self._run_worker(mode,parameters,gate_scope)
+
+    def _run_worker(self, mode, parameters, gate_scope):
         started = time.monotonic()
         request_id = uuid.uuid4().hex
         operation_sent = False
@@ -132,6 +139,9 @@ class WorkerBackend(ExperimentalBackend):
                     'delivery_confirmed': False, 'errors': []}
         try:
             worker = self._ensure_worker()
+            # Wait in the parent, before the worker-response deadline and before
+            # the operation is submitted. Every history page reaches this seam.
+            response['rate_limit']=gate_scope.enter_context(self._native_operation(mode))
             stage = 'native.worker_request'
             # Even a partial write is an uncertain submission. Never retry it.
             operation_sent = True

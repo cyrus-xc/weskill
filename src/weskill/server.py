@@ -41,7 +41,7 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
         if backend is not None:
             report["stage"] = "experimental_hooks"
             report["available_tools"].extend(["ensure_service", "get_service_status", "stop_service",
-                                              "search_contacts", "get_messages", "send_text_message", "send_image", "send_file",
+                                              "search_contacts", "get_messages", "get_events", "send_text_message", "send_image", "send_file",
                 "get_group_members", "get_group_info", "create_group", "invite_group_members",
                 "send_group_mention", "set_group_announcement", "pin_group_message",
                 "set_group_invitation_confirmation", "remove_group_members",
@@ -91,6 +91,14 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
         def stop_service() -> dict[str, Any]:
             """Stop the shared service if idle; refuse while an operation or native drain is active."""
             return backend.stop_service()
+
+        from .events import EventFeed
+        events = EventFeed(backend, getattr(backend, "state_dir", Path.home() / ".local/share/weskill/state/operations").parent / "events")
+
+        @server.tool(annotations=readonly)
+        def get_events(account_id: str, cursor: int = 0, limit: int | None = 100, resume: bool = False) -> dict[str, Any]:
+            """Read scheduled native pull events. Contact scans run at most every 15 seconds and friend-request scans every 60 seconds; repeated calls reuse durable snapshots. First call baselines without reading full history or sending. All native operation submissions share 20 requests per rolling 60 seconds, including history pages. A native error pauses collection across restarts; resume=True explicitly resumes after the user has handled the client issue. Honor status and next_poll_seconds. Cursor survives restart; 0/null limit returns all queued events. account_id is caller-confirmed. This is not native push; deleted records may be missed."""
+            return events.read(account_id, cursor, limit, resume=resume)
 
         @server.tool(annotations=ToolAnnotations(
             readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True

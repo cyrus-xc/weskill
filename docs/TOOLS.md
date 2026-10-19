@@ -88,7 +88,7 @@ npm 入口 `weskill mcp` 与源码启动器 `scripts/run_local_mcp.py` 均无需
 
 ## 群管理工具
 
-原生模式另提供 `get_group_members`、`get_group_info`、`create_group`、`invite_group_members`、`remove_group_members`、`send_group_mention`、`set_group_announcement`、`pin_group_message`、`set_group_invitation_confirmation`。参数、字段来源及真实验证范围见 [群管理说明](GROUPS.md)。当前开发版本共 31 个工具，默认诊断模式仍为 2 个。
+原生模式另提供 `get_group_members`、`get_group_info`、`create_group`、`invite_group_members`、`remove_group_members`、`send_group_mention`、`set_group_announcement`、`pin_group_message`、`set_group_invitation_confirmation`。参数、字段来源及真实验证范围见 [群管理说明](GROUPS.md)。当前开发版本共 32 个工具，默认诊断模式仍为 2 个。
 
 ## 好友管理
 
@@ -121,3 +121,16 @@ npm 入口 `weskill mcp` 与源码启动器 `scripts/run_local_mcp.py` 均无需
 业务结果的 `diagnostics.resources` 包含 `resident_scripts`、`pending_agents`、`agents_created`、`agents_released` 与 `bridge_reused`。同一 worker 复用一个执行桥，健康且回调对象已销毁的请求完成后，通常为一个驻留桥、零待回收业务脚本。发送成功仍只依据 `client_success`；资源释放检查不要求收件方确认，也不查询历史。延迟销毁的脚本在后续请求回收，状态不明的原生引用继续保留。
 
 `get_client_identity` 的 `compatibility` 字段分开报告只读 ELF 诊断与 native 构建匹配；静态匹配不代表登录、连接或业务健康。详见 [兼容性说明](COMPATIBILITY.md)。
+
+
+## 增量事件
+
+`get_events(account_id, cursor=0, limit=100, resume=False)` 通过已有原生查询提供私聊消息与新好友申请的持久化拉取流。`account_id` 是调用者确认的当前登录账号命名空间，不是自动账号识别。首次调用只建立历史基线；后续返回 `events`、`cursor`、`head` 和 `source=native_history_poll`。保存事件后再保存游标；断开和重启后使用原游标继续，重复读取同一游标返回相同已保存事件。`limit=0/null` 返回全部排队事件，没有工具箱条数上限。
+
+事件数据保存在本地私有状态目录。该接口不发送消息、不接受申请，不使用鼠标或键盘；轮询前已被删除且未保留本地记录的消息可能无法捕获。好友申请中的未知状态仍是未知状态，不因事件出现就自动认定有效或待接受。
+
+事件轮询会缓存快照与查询容量：会话列表每15秒检查一次，好友申请每60秒一次；重复读游标不会绕过时间表。首次基线不拉取全部历史，后续按新增范围从20条扩展。原生失败将持久暂停，重启不会自动解除；核对客户端后显式传入 `resume=True` 才恢复。遵循 `status`、`pause_reason` 和 `next_poll_seconds`，不要通过快速循环重试。后台申请采集不逐条补查联系人关系，unknown 不代表有效待接受申请。
+
+所有原生操作及历史分页统一限制为每用户任意60秒最多20次，达到额度会等待；状态查询不计入。该额度不是反外挂安全保证。
+
+原生操作共享跨进程互斥锁，操作结束后继续持锁随机1–3秒（失败也冷却），之后才允许下一次原生操作；分页逐页加锁。本机状态查询和缓存读取不等待此锁。20次/滚动60秒额度同时生效。`rate_limit.cooldown_seconds` 记录本次冷却，服务状态返回冷却区间和剩余时间。

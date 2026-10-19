@@ -63,3 +63,11 @@ class Session:
         if not bridge:
             self.agent = script
         return script
+
+
+def virtual_request_budget(path):
+    """Real SQLite budget and locks, virtual time for native protocol fixtures."""
+    from weskill.request_budget import NativeRequestBudget
+    now=[1000.0]
+    def sleep(seconds):now[0]+=seconds
+    return NativeRequestBudget(path,clock=lambda:now[0],sleep=sleep,jitter=lambda low,high:2.0)

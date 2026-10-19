@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from native_standin import Session
+from native_standin import Session, virtual_request_budget
 from test_connection import Token
 from weskill.backend import ExperimentalBackend
 
@@ -15,6 +15,7 @@ class NativeResourceTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name)
+        self.backend._request_budget=virtual_request_budget(Path(self.tmp.name)/'budget.sqlite3')
         self.backend._frida = SimpleNamespace(Cancellable=Token)
         self.backend._verify_binding = Mock()
         self.session = Session(result_kind='friend_profile_result')

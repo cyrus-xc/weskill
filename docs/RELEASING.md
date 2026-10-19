@@ -15,7 +15,7 @@ npm pack --ignore-scripts --pack-destination dist
 python tools/smoke_npm.py dist/weskill-0.4.2.tgz
 ```
 
-冒烟测试从真正的 tarball 解包到带空格的临时目录，创建独立 Python 环境，通过真实 MCP SDK 握手两次，不调用微信业务。ARM64 环境可增加 `--native` 验证 native 依赖/编译和 31 工具发现，仍不附加微信。
+冒烟测试从真正的 tarball 解包到带空格的临时目录，创建独立 Python 环境，通过真实 MCP SDK 握手两次，不调用微信业务。ARM64 环境可增加 `--native` 验证 native 依赖/编译和 32 工具发现，仍不附加微信。
 
 ## 首次 npm 发布
 

@@ -43,12 +43,14 @@ class LocalService(socketserver.ThreadingUnixStreamServer):
         os.chmod(self.socket_path, 0o600)
 
     def snapshot(self):
+        from .request_budget import NativeRequestBudget
         idle = max(0, time.monotonic() - self.last_request)
         return {'running': True, 'service_pid': os.getpid(), 'wechat_pid': self.profile['pid'],
                 'active_requests': max(0, self.active_requests - 1), 'stopping': self.stopping,
                 'draining_workers': self.backend.draining_workers,
                 'idle_timeout_seconds': self.profile['idle_timeout_seconds'],
                 'expires_in_seconds': max(0, round(self.profile['idle_timeout_seconds'] - idle, 1)),
+                'native_request_budget': NativeRequestBudget().snapshot(),
                 'native_connected': self.backend._worker is not None
                                     and self.backend._worker.poll() is None}
 

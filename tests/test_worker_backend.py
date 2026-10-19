@@ -5,6 +5,8 @@ import tempfile
 import unittest
 
 from weskill.worker_backend import WorkerBackend
+from weskill.request_budget import NativeRequestBudget
+from native_standin import virtual_request_budget
 
 FIXTURE = r'''
 import json,os,sys,time
@@ -40,6 +42,7 @@ class WorkerProtocolTests(unittest.TestCase):
         self.script = self.directory / 'fixture_worker.py'
         self.script.write_text(FIXTURE)
         self.backend = WorkerBackend(123, '/nonexistent/fixture.so', self.directory)
+        self.backend._request_budget=virtual_request_budget(self.directory/'budget.sqlite3')
         self.addCleanup(self.cleanup)
 
     def cleanup(self):
@@ -115,6 +118,44 @@ class WorkerProtocolTests(unittest.TestCase):
         self.assertIsNone(self.backend._retained_workers[0].poll())
         self.assertEqual(self.backend.send_text('wxid_fixture_contact', 'fixture', 'pending'), result)
         self.assertEqual(self.counter('operations'), 1)
+
+    def test_native_pages_wait_for_shared_budget_before_worker_submission(self):
+        self.mode('ready')
+        now=[1000.0]
+        def advance(seconds):now[0]+=seconds
+        self.backend._request_budget=NativeRequestBudget(self.directory/'budget.sqlite3',clock=lambda:now[0],sleep=advance,jitter=lambda low,high:2.0)
+        starts=[]
+        for _ in range(25):
+            result=self.backend._run('messages',{'chat_ids':['fixture'],'limit':20})
+            self.assertEqual(result['status'],'client_success')
+            starts.append(now[0])
+            self.assertLessEqual(sum(now[0]-60<t<=now[0] for t in starts),20)
+        self.assertEqual(self.counter('operations'),25)
+        self.assertGreaterEqual(now[0],1060)
+        self.assertTrue(all(b-a>=2 for a,b in zip(starts,starts[1:])))
+
+    def test_wire_submission_and_response_wait_keep_global_gate_locked(self):
+        import fcntl,os
+        self.mode('ready')
+        original_write=self.backend._write;original_read=self.backend._read
+        lock_path=str(self.backend._request_budget.path)+'.operation.lock'
+        checks=[]
+        def assert_locked():
+            fd=os.open(lock_path,os.O_RDWR)
+            try:
+                with self.assertRaises(BlockingIOError):fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            finally:os.close(fd)
+            checks.append(True)
+        def write(worker,value):assert_locked();return original_write(worker,value)
+        def read(worker,timeout):
+            assert_locked();value=original_read(worker,timeout);assert_locked();return value
+        self.backend._write=write;self.backend._read=read
+        result=self.backend.search_contacts(['fixture'],1)
+        self.assertEqual(result['status'],'client_success')
+        self.assertEqual(len(checks),6) # bootstrap and operation, before/after read
+        fd=os.open(lock_path,os.O_RDWR)
+        try:fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        finally:os.close(fd)
 
 
 if __name__ == '__main__':

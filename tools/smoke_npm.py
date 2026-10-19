@@ -29,7 +29,7 @@ async def check(node, archive, native=False):
                     assert init.serverInfo.name == 'weskill'
                     listing = await session.list_tools()
                     if native:
-                        assert len(listing.tools) == 31
+                        assert len(listing.tools) == 32
                     else:
                         assert {x.name for x in listing.tools} == {'get_client_identity', 'get_capabilities'}
                     result = await session.call_tool('get_capabilities', {})
@@ -41,7 +41,7 @@ async def check(node, archive, native=False):
             async with stdio_client(params) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
-                    assert len((await session.list_tools()).tools) == (31 if native else 2)
+                    assert len((await session.list_tools()).tools) == (32 if native else 2)
         print('PASS: packed npm CLI bootstraps Python and passes real MCP handshake twice')
 
 

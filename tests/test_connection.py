@@ -1,5 +1,7 @@
 """Connection timeout recovery without real native calls or message sends."""
 import tempfile
+from pathlib import Path
+from native_standin import virtual_request_budget
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -38,6 +40,7 @@ class ConnectionTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name)
+        self.backend._request_budget=virtual_request_budget(Path(self.tmp.name)/'budget.sqlite3')
         self.backend._verify_binding = Mock()
 
     def frida(self, effects):
@@ -87,6 +90,7 @@ class ConnectionTests(unittest.TestCase):
 
     def test_exhausted_connection_allows_explicit_retry_before_submission(self):
         backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name)
+        backend._request_budget=virtual_request_budget(Path(self.tmp.name)/'budget.sqlite3')
         backend._ensure_session = Mock(side_effect=NativeConnectionTimeout(
             'Native connection timed out before any business task was submitted'))
         first = backend.send_text('wxid_fixture_contact', 'fixture text', 'cancelled-connect')
@@ -94,12 +98,24 @@ class ConnectionTests(unittest.TestCase):
         self.assertEqual(first['error_code'], 'connection_timeout')
         self.assertEqual(first['failure_stage'], 'connection')
         self.assertIs(first['retry_allowed'], True)
-        self.assertEqual(backend.send_text('wxid_fixture_contact', 'fixture text',
-                                          'cancelled-connect'), first)
+        retry=backend.send_text('wxid_fixture_contact','fixture text','cancelled-connect')
+        self.assertEqual(retry['status'],first['status'])
+        self.assertEqual(retry['error_code'],first['error_code'])
+        self.assertTrue(retry['retry_allowed'])
         self.assertEqual(backend._ensure_session.call_count, 2)
+
+    def test_pending_executor_status_checks_back_off(self):
+        now=[0.0];calls=[]
+        self.backend._rpc=lambda *args: calls.append(now[0]) or {'idle':False}
+        def sleep(seconds):now[0]+=seconds
+        with patch('weskill.backend.time.monotonic',lambda:now[0]),patch('weskill.backend.time.sleep',sleep):
+            with self.assertRaises(TimeoutError):self.backend._wait_idle(object(),1)
+        self.assertLess(len(calls),40)
+        self.assertGreaterEqual(now[0],30)
 
     def test_cancellation_at_business_submission_is_unknown_and_never_repeated(self):
         backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name)
+        backend._request_budget=virtual_request_budget(Path(self.tmp.name)/'budget.sqlite3')
         backend._frida = SimpleNamespace(Cancellable=Token)
         backend._verify_binding = Mock()
         from native_standin import Session
