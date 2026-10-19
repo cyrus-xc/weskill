@@ -24,7 +24,7 @@ python tools/smoke_npm.py dist/weskill-0.4.2.tgz
 ```bash
 npm login
 # 独立初始化目录只含公开的 package.json、README 和 LICENSE
-npm publish .state/npm-bootstrap --tag bootstrap --access public --ignore-scripts
+npm publish ./.state/npm-bootstrap --tag bootstrap --access public --ignore-scripts
 npm trust github weskill --repo cyrus-xc/weskill --file publish.yml --allow-publish --yes
 ```
 
@@ -40,7 +40,7 @@ npm trust github weskill --repo cyrus-xc/weskill --file publish.yml --allow-publ
 4. 创建并推送 `v<版本>` 标签，触发 `.github/workflows/publish.yml`。
 5. 发布 workflow 再次验证包和 MCP，通过 OIDC 发布 npm，生成 GitHub Release 和四种附件及校验值。
 
-workflow 支持手动以现有版本标签重跑。已存在的 npm 版本只有在 tarball integrity 完全一致时才接受为已发布；不会覆盖不同内容，也不移动既有标签。npm 与 GitHub 发布步骤独立，重跑可以补齐尚未生成的 GitHub 附件。
+workflow 支持从默认分支手动以现有版本标签重跑：采用所选分支的发布流程，打包源码仍从版本标签检出。发布逻辑放在 workflow 内，便于修复流水线而不移动既有标签。本地 tarball 使用绝对路径，避免 npm 将相对路径误识别为 GitHub 包。已存在的 npm 版本只有在 tarball integrity 完全一致时才接受为已发布；不会覆盖不同内容，也不移动既有标签。npm 与 GitHub 发布步骤独立，重跑可以补齐尚未生成的 GitHub 附件。
 
 npm 包和 GitHub Release 完成后，再从 registry 安装对应版本核验。公开 Agent 插件目录的审核属于各平台流程，npm 发布不表示已经上架其目录。
 

@@ -15,5 +15,5 @@ recursive-include bin *.mjs
 recursive-include lib *.mjs *.py
 include tools/check_npm_package.mjs
 recursive-include tests/npm *.mjs
-include tools/smoke_npm.py tools/build_release.py tools/publish_npm.mjs
+include tools/smoke_npm.py tools/build_release.py
 recursive-include .github/workflows *.yml
