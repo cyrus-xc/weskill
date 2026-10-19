@@ -102,60 +102,35 @@ class ConnectionTests(unittest.TestCase):
         backend = ExperimentalBackend(123, '/nonexistent/fixture.so', self.tmp.name)
         backend._frida = SimpleNamespace(Cancellable=Token)
         backend._verify_binding = Mock()
-        handler = {}
-        submitted = []
-        def on(kind, callback):
-            handler[kind] = callback
-        def submit(task):
-            if task is None:
-                handler['message']({'type': 'send', 'payload': {
-                    'kind': 'executor_noop', 'tid': 42}}, None)
-                return 0
-            submitted.append(task)
-            raise OperationCancelledError('operation was cancelled')
-        exports = SimpleNamespace(setup=lambda path: None, submit_task=submit,
-            prepare=lambda *args: 'fixture-task', bridge_status=lambda: {
-                'idle': True, 'invokes': 1, 'allocations': 1, 'frees': 1,
-                'noopRuns': 1, 'tid': 42})
-        script = SimpleNamespace(on=on, load=lambda: None, exports_sync=exports,
-                                 eternalize=Mock())
-        backend._ensure_session = Mock(return_value=SimpleNamespace(
-            create_script=Mock(return_value=script)))
+        from native_standin import Session
+        session = Session(submission_error=OperationCancelledError('operation was cancelled'))
+        backend._ensure_session = Mock(return_value=session)
         with patch('weskill.backend.threading.Timer'):
             first = backend.send_text('wxid_fixture_contact', 'fixture text', 'during-submit')
         self.assertEqual(first['status'], 'unknown')
         self.assertEqual(first['failure_stage'], 'native.submit_task')
-        self.assertEqual(submitted, ['fixture-task'])
+        self.assertEqual(session.business_submissions, 1)
         self.assertEqual(backend.send_text('wxid_fixture_contact', 'fixture text',
                                           'during-submit'), first)
-        self.assertEqual(submitted, ['fixture-task'])
+        self.assertEqual(session.business_submissions, 1)
         backend._ensure_session.assert_called_once()
-        script.eternalize.assert_called_once()
+        self.assertEqual(len(backend._resources.pending), 1)
+        backend.close()
+        for script in session.scripts:
+            script.eternalize.assert_called_once()
+            script.unload.assert_not_called()
     def test_client_success_does_not_wait_for_callback_destruction_or_history(self):
         backend = self.backend
-        handlers = {}
-        script = SimpleNamespace(on=lambda name, cb: handlers.update({name: cb}),
-                                 load=lambda: None, eternalize=Mock())
-        backend._ensure_session = Mock(return_value=SimpleNamespace(
-            create_script=lambda source: script))
-        backend._wait_idle = Mock(return_value={'tid': 42, 'noopRuns': 1})
-
-        def rpc(agent, name, *args):
-            if name == 'prepare':
-                return 'task'
-            if name == 'submit_task':
-                payload = ({'kind': 'executor_noop', 'tid': 42} if args[0] is None
-                           else {'kind': 'text_send_result', 'result': {'success': True}, 'error': ''})
-                handlers['message']({'type': 'send', 'payload': payload}, None)
-                return 0
-            if name == 'status':
-                return {'invoked': True, 'completed': True, 'destroyed': False,
-                        'invocationCount': 1, 'completionCount': 1, 'errors': []}
-
-        backend._rpc = Mock(side_effect=rpc)
-        result = backend.send_text('filehelper', 'fixture', 'client-success-only')
+        from native_standin import Session
+        session = Session(destroyed=False)
+        backend._ensure_session = Mock(return_value=session)
+        backend._frida = SimpleNamespace(Cancellable=Token)
+        with patch('weskill.backend.threading.Timer'):
+            result = backend.send_text('filehelper', 'fixture', 'client-success-only')
         self.assertEqual(result['status'], 'client_success')
-        script.eternalize.assert_called_once()
+        self.assertEqual(len(backend._resources.pending), 1)
+        session.agent.unload.assert_not_called()
+        session.agent.eternalize.assert_not_called()
         self.assertEqual(backend._ensure_session.call_count, 1)
 
 

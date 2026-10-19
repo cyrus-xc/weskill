@@ -1,6 +1,6 @@
 {
   "name": "weskill",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "description": "Linux WeChat Skills and local native MCP: messages, friends, groups, stickers and Moments.",
   "license": "MIT",
   "skills": "./skills/",

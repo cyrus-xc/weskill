@@ -1,8 +1,8 @@
 """Native operations for the local MCP; client success is the send-success criterion.
 
-One session per backend; one permanently retained script per request. No native
-operation runs during construction. The caller must keep this backend alive for
-the lifetime of WeChat, including after timed-out requests.
+One session and executor bridge per backend. Completed business agents are
+released after native ownership ends; uncertain callbacks remain retained.
+No native operation runs during construction.
 """
 from __future__ import annotations
 
@@ -71,6 +71,8 @@ class ExperimentalBackend:
         self._session = None
         self._binding = None
         self._scripts = []
+        from .native_resources import NativeResources
+        self._resources = NativeResources(self)
         self._frida = None
         self._unsafe = None
         self.timeout_seconds = 30.0
@@ -179,6 +181,8 @@ class ExperimentalBackend:
         events = []
         event_lock = threading.Lock()
         script = None
+        bridge = None
+        bridge_handler_attached = False
         submission_possible = False
         state = None
         response = {'status': 'not_submitted', 'result': None,
@@ -197,16 +201,21 @@ class ExperimentalBackend:
                      'friend_request': 'friend_request_agent.js', 'emoji_query': 'emoji_query_agent.js', 'emoji_send': 'emoji_send_agent.js',
                      'moments_read': 'moments_read_agent.js', 'moments_publish': 'moments_publish_agent.js'}[mode]
             assets = files('weskill').joinpath('assets')
-            source = assets.joinpath(asset).read_text() + '\n' + assets.joinpath('executor_bridge.js').read_text()
-            script = session.create_script(source)
-            self._scripts.append(script)  # Never unload or detach after task allocation.
+            bridge = self._resources.ensure_bridge(session)
+            self._resources.reap()
+            bridge.on('message', on_message)
+            bridge_handler_attached = True
+            before = self._rpc(bridge, 'bridge_status')
+            initial_invokes = int(before['invokes'])
+            initial_noops = int(before['noopRuns'])
+            source = assets.joinpath(asset).read_text()
+            script = self._resources.create_agent(session, source)
             script.on('message', on_message)
             script.load()
-            self._rpc(script, 'setup', str(self.shim_path))
-            if self._rpc(script, 'submit_task', None) != 0:
+            if self._rpc(bridge, 'submit_task', None) != 0:
                 raise RuntimeError('Executor no-op submission rejected')
-            noop = self._wait_idle(script, 1)
-            if noop.get('noopRuns') != 1 or int(noop['tid']) <= 0:
+            noop = self._wait_idle(bridge, initial_invokes + 1)
+            if int(noop.get('noopRuns', 0)) != initial_noops + 1 or int(noop['tid']) <= 0:
                 raise RuntimeError('Executor no-op did not identify one native thread')
             with event_lock:
                 noops = [m.get('payload', {}) for m in events if m.get('type') == 'send'
@@ -224,10 +233,10 @@ class ExperimentalBackend:
             self._verify_binding()
             # RPC failure after this point cannot prove absence of submission.
             submission_possible = True
-            if self._rpc(script, 'submit_task', task) != 0:
+            if self._rpc(bridge, 'submit_task', task) != 0:
                 submission_possible = False  # Native shim returned before post.
                 raise RuntimeError('Native task submission rejected; no retry')
-            executor = self._wait_idle(script, 2)
+            executor = self._wait_idle(bridge, initial_invokes + 2)
             if executor['tid'] != noop['tid']:
                 raise RuntimeError('Executor task ran on a different thread')
             deadline = time.monotonic() + self.timeout_seconds
@@ -288,29 +297,39 @@ class ExperimentalBackend:
                                       else 'operation_cancelled' if type(error).__name__ == 'OperationCancelledError'
                                       else 'native_operation_failed')
         finally:
+            cleanup_ok = True
             if script is not None:
                 if mode == 'mention':
                     try:
                         self._rpc(script, 'cleanup')
                     except Exception as error:
+                        cleanup_ok = False
                         self._unsafe = 'Could not remove this request mention hook; backend is disabled'
                         response.update(status='unknown')
                         response['errors'].append(f'{self._unsafe}: {error}')
                 try:
-                    # Frida16 destroys the RPC handle here. No RPC after this.
-                    script.eternalize()
+                    self._resources.finish(script, submission_possible, cleanup_ok, state)
                 except Exception as error:
-                    # Keep both Script and Session alive even if this fails.
-                    self._unsafe = 'Could not eternalize callback agent; backend is disabled'
-                    response['errors'].append(f'{self._unsafe}: {error}')
+                    # Keep native callbacks and capture reachable after any
+                    # failed lifecycle inspection; never guess they are dead.
+                    if not any(item[0] is script for item in self._resources.pending):
+                        self._resources.pending.append((script, cleanup_ok))
+                    response.setdefault('resource_errors', []).append(f'{type(error).__name__}: {error}')
+            if bridge_handler_attached:
+                bridge.off('message', on_message)
             with event_lock:
                 snapshot = list(events)
             response['diagnostics'] = {'connection_attempts': self.connection_attempts,
                                        'elapsed_seconds': round(time.monotonic() - started, 3),
-                                       'server_pid': os.getpid()}
+                                       'server_pid': os.getpid(),
+                                       'resources': self._resources.snapshot()}
             _save_private(journal, {'mode': mode, 'response': response, 'events': snapshot,
-                                    'agent_lifetime': 'until_wechat_exits'})
+                                    'agent_lifetime': 'released_after_native_destroy_or_retained_while_pending'})
         return response
+
+    def close(self):
+        """Retain any uncertain native callbacks before the owning worker exits."""
+        self._resources.close()
 
     def search_contacts(self, keywords: list[str], limit: int = 10,
                         groups_only: bool = False, sort_by_time: bool = False) -> dict:
@@ -525,6 +544,8 @@ class ExperimentalBackend:
             raise ValueError('Expected recipient ID, selected sticker ID and saved/search source')
         if not isinstance(idempotency_key, str) or not idempotency_key:
             raise ValueError('A nonempty idempotency key is required')
+        recipient.encode('utf-8')
+        sticker_id.encode('utf-8')
         parameters = {'recipient': recipient, 'sticker_id': sticker_id, 'source': source}
         ledger = self.state_dir / ('send-' + hashlib.sha256(idempotency_key.encode()).hexdigest() + '.json')
         with self._lock, self._ledger_lock():
@@ -573,6 +594,8 @@ class ExperimentalBackend:
             raise ValueError('Expected a nonnegative limit and boolean include_xml')
         if contact_id is not None and not valid_chat_id(contact_id):
             raise ValueError('Expected a contact ID')
+        if contact_id is not None:
+            contact_id.encode('utf-8')
         with self._lock, self._ledger_lock():
             return read_moments(self._run, limit, cursor, contact_id, include_xml)
 

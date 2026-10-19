@@ -21,23 +21,26 @@ def main():
               else 'connection_failed', 'error': f'{type(error).__name__}: {error}'})
         return
     emit({'ready': True})
-    for line in sys.stdin:
-        request = json.loads(line)
-        mode, values = request['mode'], request['parameters']
-        try:
-            if mode == 'search':
-                response = backend.search_contacts(values['keywords'], values['limit'],
-                                                   values['filter_type'] == 2, values['sort_by_time'])
-            elif mode == 'messages':
-                response = backend._run('messages', values)
-            elif mode in ('send', 'media', 'group', 'mention', 'friend_profile', 'friend_remark', 'friend_request', 'emoji_query', 'emoji_send', 'moments_read', 'moments_publish'):
-                response = backend._run(mode, values)  # The parent owns the durable send ledger.
-            else:
-                raise ValueError('Unsupported native operation')
-        except Exception as error:
-            response = {'status': 'unknown', 'result': None, 'delivery_confirmed': False,
-                        'errors': [f'{type(error).__name__}: {error}']}
-        emit({'id': request['id'], 'response': response})
+    try:
+        for line in sys.stdin:
+            request = json.loads(line)
+            mode, values = request['mode'], request['parameters']
+            try:
+                if mode == 'search':
+                    response = backend.search_contacts(values['keywords'], values['limit'],
+                                                       values['filter_type'] == 2, values['sort_by_time'])
+                elif mode == 'messages':
+                    response = backend._run('messages', values)
+                elif mode in ('send', 'media', 'group', 'mention', 'friend_profile', 'friend_remark', 'friend_request', 'emoji_query', 'emoji_send', 'moments_read', 'moments_publish'):
+                    response = backend._run(mode, values)  # The parent owns the durable send ledger.
+                else:
+                    raise ValueError('Unsupported native operation')
+            except Exception as error:
+                response = {'status': 'unknown', 'result': None, 'delivery_confirmed': False,
+                            'errors': [f'{type(error).__name__}: {error}']}
+            emit({'id': request['id'], 'response': response})
+    finally:
+        backend.close()
 
 
 if __name__ == '__main__':

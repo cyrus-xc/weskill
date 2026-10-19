@@ -2,6 +2,8 @@
 
 默认诊断模式提供 `get_client_identity` 与 `get_capabilities`；显式启用原生后端后提供服务控制、消息、好友和群管理工具。工具以 MCP 会话实际返回的 schema 为准。
 
+能力报告中的 `prototype_verified` 表示记录构建内的原生实测，`user_reported` 表示使用者反馈的实测（当前为添加/接受好友），`candidate_runtime` 仅为注册线索，`unverified` 表示尚无可用实现验证。`evidence` 给出具体范围与公开说明；`execution_available` 才表示当前模式是否提供该操作，不代表已经附加或检查了当前客户端健康。
+
 | 工具 | 参数 | 用途 |
 | --- | --- | --- |
 | `ensure_service` | 无 | 启动或续期共享服务，空闲一小时退出 |
@@ -99,7 +101,7 @@
 | `add_friend` | `query, idempotency_key, greeting="", remark=""` | 原生搜索后以真实验证凭据提交申请 |
 | `accept_friend_request` | `request_id, idempotency_key, remark=null` | 使用所选申请的原生凭据接受；null保留其备注 |
 
-搜索新联系人、主动添加及接受申请的开发验证进度见 [好友管理说明](FRIENDS.md)。工具列表包含开发中的原生接口；以能力报告的验证状态判断已通过的范围。
+搜索新联系人已做原生验证，主动添加及接受申请由使用者确认实测通过，见 [好友管理说明](FRIENDS.md)。以能力报告的验证状态和证据范围区分两类来源。
 
 ## 表情与朋友圈
 
@@ -113,3 +115,9 @@
 | `publish_moments` | `content, visibility, idempotency_key, image_paths=[]` | 发布文字和/或本机图片，private仅自己可见/public好友可见 |
 
 列表默认20，支持自定义条数；0/null跟随全部当前可访问记录。微信可见权限、缓存和分页中止会明确报告。字段与验证范围见 [表情](EMOJI.md) 和 [朋友圈](MOMENTS.md)。
+
+## 原生资源诊断
+
+业务结果的 `diagnostics.resources` 包含 `resident_scripts`、`pending_agents`、`agents_created`、`agents_released` 与 `bridge_reused`。同一 worker 复用一个执行桥，健康且回调对象已销毁的请求完成后，通常为一个驻留桥、零待回收业务脚本。发送成功仍只依据 `client_success`；资源释放检查不要求收件方确认，也不查询历史。延迟销毁的脚本在后续请求回收，状态不明的原生引用继续保留。
+
+`get_client_identity` 的 `compatibility` 字段分开报告只读 ELF 诊断与 native 构建匹配；静态匹配不代表登录、连接或业务健康。详见 [兼容性说明](COMPATIBILITY.md)。

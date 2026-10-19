@@ -56,7 +56,7 @@ class StdioIntegrationTests(unittest.IsolatedAsyncioTestCase):
             operations = report.structuredContent["capabilities"]
             self.assertGreaterEqual(len(operations), 24)
             self.assertTrue(all(not item["execution_available"] for item in operations))
-            self.assertTrue(all(item["status"] in {"prototype_verified", "candidate_runtime", "unverified"} for item in operations))
+            self.assertTrue(all(item["status"] in {"prototype_verified", "user_reported", "candidate_runtime", "unverified"} for item in operations))
             missing = await session.call_tool("send_private_text", {"text": "must not send"})
             self.assertTrue(missing.isError)
 

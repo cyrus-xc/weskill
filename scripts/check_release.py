@@ -37,7 +37,7 @@ def main():
         try:
             content = path.read_text()
         except UnicodeDecodeError:
-            if path.suffix not in {'.png', '.jpg', '.webp'}:
+            if path.suffix not in {'.png', '.jpg', '.webp', '.gif'}:
                 errors.append(f'{name}: unexpected binary in source release')
             continue
         if home_path.search(content):
@@ -57,7 +57,7 @@ def main():
     for host in ('codex', 'claude'):
         manifest = plugin / f'.{host}-plugin/plugin.json'
         value = json.loads(manifest.read_text())
-        if value.get('name') != 'weskill' or value.get('version') != '0.4.0':
+        if value.get('name') != 'weskill' or value.get('version') != '0.4.2':
             errors.append(f'{manifest.relative_to(ROOT)}: inconsistent plugin identity')
     required = [ROOT / 'docs/EMOJI.md', ROOT / 'docs/MOMENTS.md',
                 ROOT / '.agents/plugins/marketplace.json',

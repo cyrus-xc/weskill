@@ -1,4 +1,4 @@
-"""Bounded research observations, never executable business capabilities."""
+"""Recorded validation evidence, independent of this session's execution mode."""
 
 from typing import Any
 
@@ -13,8 +13,8 @@ RESEARCH_TARGET = {
     "observed_on": "2026-10-18",
 }
 
-# Names were first found statically and then observed in the recorded runtime
-# registry. Registration does not prove a callable business operation works.
+# A seed is a recorded native name, not proof that the business operation works.
+# Actual validation is described separately below, including user-reported tests.
 _OPERATIONS = (
     ("receive_messages", "接收消息事件", None),
     ("get_messages", "获取聊天消息", "message::list_messages"),
@@ -59,6 +59,39 @@ VERIFIED = {"get_messages", "list_contacts", "list_groups", "send_private_text",
             "send_image", "send_file"} | GROUP_VERIFIED | FRIEND_VERIFIED | SOCIAL_VERIFIED
 
 
+def _evidence(name: str, seed: str | None) -> list[dict[str, Any]]:
+    if name in USER_VERIFIED:
+        return [{"kind": "user_reported_validation", "source": "docs/FRIENDS.md",
+                 "limitation": "User confirmed real add/accept tests; other builds and account types are not covered"}]
+    if name in VERIFIED:
+        source = "docs/FEATURES.md#验证范围"
+        limitation = "Contact/group search and local history on the recorded build; no real-time subscription"
+        if name in {"send_private_text", "send_group_text"}:
+            limitation = "Private and ordinary-group text sends returned client_success on the recorded build"
+        elif name in {"send_image", "send_file"}:
+            limitation = "Private and ordinary-group PNG/text-file sends returned client_success; other formats are not individually verified"
+        elif name in GROUP_VERIFIED:
+            source = "docs/GROUPS.md"
+            limitation = "Ordinary test groups on the recorded build; invitations do not imply acceptance"
+        elif name in FRIEND_VERIFIED:
+            source = "docs/FRIENDS.md"
+            limitation = "Local records, remark update/restore and native new-contact search on the recorded build; profile lookup is not a remote refresh"
+        elif name == "read_moments":
+            source = "docs/MOMENTS.md"
+            limitation = "Timeline, personal posts and cursor continuation on the recorded build; only client-accessible history"
+        elif name == "publish_moments":
+            source = "docs/MOMENTS.md"
+            limitation = "Text-only and single-PNG publication with private/self visibility verified; public and multi-image publication are not live-verified"
+        elif name in SOCIAL_VERIFIED:
+            source = "docs/EMOJI.md"
+            limitation = "System tokens, saved PNG and searched GIF native send/download verified; other sticker types are not individually verified"
+        return [{"kind": "native_runtime_verified", "source": source, "limitation": limitation}]
+    if seed:
+        return [{"kind": "runtime_registered", "seed": seed, "source": "docs/FEATURES.md",
+                 "limitation": "Recorded registration is not proof of parameters, permissions, or successful execution"}]
+    return []
+
+
 def capability_report() -> dict[str, Any]:
     return {
         "stage": "research_diagnostics",
@@ -69,7 +102,8 @@ def capability_report() -> dict[str, Any]:
         "research_target": dict(RESEARCH_TARGET),
         "candidate_scope": "Recorded build and runtime capture only; not automatically matched to the configured client or current process",
         "status_definitions": {
-            "prototype_verified": "Actual native prototype verified; executable via opt-in backend only, client success is the send-success criterion",
+            "prototype_verified": "Native operation verified on the recorded build within its evidence limitations; this is not a current-session health check",
+            "user_reported": "User reported successful real operation; not independently reproduced by the automated validation suite",
             "candidate_runtime": "Name observed in recorded runtime registry; no business invocation or success verified",
             "unverified": "No usable implementation verified",
         },
@@ -77,30 +111,9 @@ def capability_report() -> dict[str, Any]:
             {
                 "id": name,
                 "label": label,
-                "status": "prototype_verified" if name in VERIFIED else "candidate_runtime" if seed else "unverified",
+                "status": "user_reported" if name in USER_VERIFIED else "prototype_verified" if name in VERIFIED else "candidate_runtime" if seed else "unverified",
                 "execution_available": False,
-                "evidence": (
-                    [{"kind": "native_runtime_verified",
-                      "source": "docs/MOMENTS.md" if name in ("read_moments", "publish_moments") else "docs/EMOJI.md",
-                      "limitation": "Recorded build; Moments publication tested only with self visibility; consult per-feature validation scope"}]
-                    if name in SOCIAL_VERIFIED else
-                    [{"kind": "native_runtime_verified", "source": "docs/GROUPS.md",
-                      "limitation": "Ordinary test groups on the recorded build; invitations do not imply acceptance"}]
-                    if name in GROUP_VERIFIED else
-                    [{"kind": "user_reported_validation", "source": "docs/FRIENDS.md",
-                      "limitation": "User confirmed real add/accept tests; other builds and account types are not covered"}]
-                    if name in USER_VERIFIED else
-                    [{"kind": "native_runtime_verified", "source": "docs/FRIENDS.md",
-                      "limitation": "Available local native records on the recorded build; not a remote refresh"}]
-                    if name in FRIEND_VERIFIED else [{
-                        "kind": "runtime_registered",
-                        "seed": seed,
-                        "source": "docs/FEATURES.md",
-                        "source_scope": "Public capability summary; raw research and live payloads are private local artifacts",
-                        "prototype_evidence": "docs/FEATURES.md#验证范围" if name in VERIFIED else None,
-                        "limitation": "Recorded registration is not proof of private/group routing, parameters, permissions, or successful execution",
-                    }] if seed else []
-                ),
+                "evidence": _evidence(name, seed),
             }
             for name, label, seed in _OPERATIONS
         ],

@@ -1,6 +1,6 @@
 # Codex 与 Claude 插件发布准备
 
-同一插件中的 `weskill` 总入口、群管理、好友管理、表情与朋友圈 Skill 服务于两端，插件身份与版本均为 `weskill` / `0.4.0`。skill 提供操作流程，原生 MCP 环境按 README 单独安装与注册；插件不包含私有配置、客户端二进制或预编译原生库。
+同一插件中的 `weskill` 总入口、群管理、好友管理、表情与朋友圈 Skill 服务于两端，插件身份与版本均为 `weskill` / `0.4.2`。skill 提供操作流程，原生 MCP 环境按 README 单独安装与注册；插件不包含私有配置、客户端二进制或预编译原生库。
 
 ```text
 .agents/plugins/marketplace.json            Codex 本地 marketplace
@@ -16,14 +16,10 @@ plugins/weskill/
     │   ├── agents/openai.yaml
     │   ├── assets/logo.svg
     │   └── references/
-    ├── weskill-group/                     群管理流程
-        ├── SKILL.md
-        ├── agents/openai.yaml
-        ├── assets/logo.svg
-        └── references/
-    └── weskill-friends/                   好友资料、备注与申请流程
-        ├── SKILL.md
-        └── agents/openai.yaml
+    ├── weskill-group/                     群管理
+    ├── weskill-friends/                   好友资料、备注与申请
+    ├── weskill-emoji/                     系统与自定义表情
+    └── weskill-moments/                   朋友圈读取与发布
 ```
 
 Codex 使用仍受支持的 `.codex-plugin/plugin.json` 布局，Claude 使用 `.claude-plugin/plugin.json` 和默认 `skills/` 目录。插件没有生命周期 hooks，也没有自动启动原生注入的 MCP 配置。
@@ -55,7 +51,7 @@ claude plugin install weskill@weskill-local
 ```bash
 mkdir -p dist
 cd plugins/weskill
-python3 -m zipfile -c ../../dist/weskill-plugin-0.4.0.zip .codex-plugin .claude-plugin skills assets LICENSE
+python3 -m zipfile -c ../../dist/weskill-plugin-0.4.2.zip .codex-plugin .claude-plugin skills assets LICENSE
 cd ../..
 ```
 

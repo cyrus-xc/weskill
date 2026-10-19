@@ -52,6 +52,9 @@ def create_server(client_path: Path, backend: Any = None) -> FastMCP:
                                            "isolation": "native_worker"}
             report["service_policy"] = {"idle_timeout_seconds": 3600, "transport": "unix_socket",
                                         "shared_across_mcp_sessions": True}
+            report["resource_policy"] = {"executor_bridge": "shared_per_worker",
+                                         "business_agents": "release_after_native_task_idle_and_callback_destroy",
+                                         "pending_agents": "retain_until_proven_finished; recheck_on_next_request"}
             report["history_policy"] = {"default_limit": 20, "max_limit": None,
                                         "all_records": "limit=0 or null", "include_xml": "caller_selected"}
             report["send_success_policy"] = "client_success; no history verification"

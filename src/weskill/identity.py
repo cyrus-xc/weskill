@@ -8,6 +8,8 @@ from typing import Any
 from elftools.common.exceptions import ELFError
 from elftools.elf.elffile import ELFFile
 
+from .compatibility import assess_compatibility
+
 
 def inspect_identity(client_path: Path) -> dict[str, Any]:
     """Read identity from one open file, rejecting missing or non-ELF targets."""
@@ -31,7 +33,7 @@ def inspect_identity(client_path: Path) -> dict[str, Any]:
                 after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns
             ):
                 raise ValueError("Client file changed during identity inspection; retry explicitly")
-            return {
+            identity = {
                 "path": str(path),
                 "sha256": digest,
                 "build_id": build_id,
@@ -43,6 +45,8 @@ def inspect_identity(client_path: Path) -> dict[str, Any]:
                 "authenticity_verified": False,
                 "process_attached": False,
             }
+            identity["compatibility"] = assess_compatibility(identity)
+            return identity
     except (OSError, ELFError) as error:
         raise ValueError(f"Cannot inspect configured client ELF: {error}") from error
 
