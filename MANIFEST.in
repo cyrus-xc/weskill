@@ -10,3 +10,10 @@ prune .state
 prune native/build
 global-exclude __pycache__ *.py[cod] *.core *.log
 include tools/render_demo.py
+include package.json package-lock.json
+recursive-include bin *.mjs
+recursive-include lib *.mjs *.py
+include tools/check_npm_package.mjs
+recursive-include tests/npm *.mjs
+include tools/smoke_npm.py tools/build_release.py tools/publish_npm.mjs
+recursive-include .github/workflows *.yml

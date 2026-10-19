@@ -111,35 +111,25 @@ weSkill 让 Agent 直接操作 Linux 原生微信：查找联系人、理解聊�
 
 ## 快速开始
 
-原生执行适配 **Linux ARM64、微信 4.1.13.26 的指定构建**，微信位于 `/opt/wechat/wechat` 并已登录。准备 Python 3.12+、GCC 与可访问该微信进程的本机用户；构建识别方式见 [兼容性说明](docs/COMPATIBILITY.md)。
-
-### 安装执行层
+推荐通过 **npm** 安装，一份包包含 CLI、五个 Skill 和 Python 原生执行层。准备 Node.js 22+、Python 3.12+（含 `venv`）与 GCC。原生操作适配 **Linux ARM64、微信 4.1.13.26 的指定构建**；本机微信位于 `/opt/wechat/wechat` 并已登录。构建识别方式见 [兼容性说明](docs/COMPATIBILITY.md)。
 
 ```bash
-git clone https://github.com/cyrus-xc/weskill.git
-cd weskill
-python3 -m venv .venv
-.venv/bin/python -m pip install -e '.[hooks]'
-mkdir -p native/build .state
-chmod 700 .state
-gcc -std=c11 -O2 -fPIC -shared \
-  native/readonly_executor_shim.c native/readonly_executor_shim.S \
-  -o native/build/libreadonly-executor-shim.so
+npm install -g weskill
+weskill setup
 ```
 
-### 接入助手
+`setup` 在用户目录创建独立 Python 环境、安装依赖并编译原生桥，不连接微信、不发送消息。
 
-在仓库根目录，按使用的宿主完成 MCP 注册和 Skill 安装：
+### 接入助手
 
 <details open>
 <summary><strong>Codex</strong></summary>
 
 ```bash
-codex mcp add weskill -- \
-  "$PWD/.venv/bin/python" "$PWD/scripts/run_local_mcp.py"
-codex plugin marketplace add "$PWD"
-codex plugin add weskill@weskill-local
+weskill install codex
 ```
+
+自动注册本机 MCP，并安装五个 Codex Skill。
 
 </details>
 
@@ -147,17 +137,33 @@ codex plugin add weskill@weskill-local
 <summary><strong>Claude Code</strong></summary>
 
 ```bash
-claude mcp add --transport stdio --scope user weskill -- \
-  "$PWD/.venv/bin/python" "$PWD/scripts/run_local_mcp.py"
-claude plugin marketplace add "$PWD"
-claude plugin install weskill@weskill-local
+weskill install claude
+```
+
+自动以用户范围注册 stdio MCP，并安装五个 Claude Skill。
+
+</details>
+
+<details>
+<summary><strong>其他 Agent 平台</strong></summary>
+
+支持本机 stdio MCP 的平台可直接使用执行层：
+
+```bash
+weskill config
+```
+
+将输出中的 `command` 和 `args` 按宿主格式填入 MCP 配置。输出使用绝对路径，方便图形界面启动。支持 `SKILL.md` 的平台还可安装操作流程：
+
+```bash
+weskill skills --dir /path/to/agent/skills
 ```
 
 </details>
 
-新开会话或重新连接 MCP，调用 `$weskill` 即可。助手先读取可用能力，再搜索目标和执行任务；重名联系人通过内部 ID 确定。Skill 插件与本机 MCP 执行环境分别安装，其他 MCP 客户端也可直接使用执行层。
+新开会话或重新连接 MCP，再调用 `$weskill` 或直接描述微信任务。原生模式提供 31 个工具；Agent 平台支持与微信原生构建适配是两个独立条件。详细安装、`npx` 接入与源码开发见 [安装指南](docs/INSTALL.md)。
 
-客户端返回 `client_success` 即按发送成功处理。写操作使用持久幂等键，结果未知时不自动重发；运行记录保存在 `.state/`。参数、服务管理与连接排查见 [工具参考](docs/TOOLS.md)。
+客户端返回 `client_success` 即按发送成功处理，结果未知时不自动重发。npm 安装的运行与幂等记录保存在用户数据目录，升级包时保留；服务管理和路径选项见 [安装指南](docs/INSTALL.md#运行目录与服务管理)。
 
 ## we-Agent
 

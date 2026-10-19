@@ -1,0 +1,26 @@
+{
+  "name": "weskill",
+  "version": "0.4.2",
+  "description": "weSkill: Linux WeChat Skills and a local native MCP for Codex, Claude and other agents",
+  "type": "module",
+  "license": "MIT",
+  "engines": {"node": ">=22"},
+  "bin": {"weskill": "bin/weskill.mjs"},
+  "files": [
+    "bin/", "lib/", "src/weskill/**/*.py", "src/weskill/assets/",
+    "native/readonly_executor_shim.c", "native/readonly_executor_shim.S",
+    "scripts/run_local_mcp.py", "plugins/weskill/",
+    ".agents/plugins/marketplace.json", ".claude-plugin/marketplace.json",
+    "pyproject.toml", "MANIFEST.in", "README.md", "LICENSE", "assets/", "docs/*.md"
+  ],
+  "scripts": {
+    "test": "node --test tests/npm/*.test.mjs",
+    "check:package": "node tools/check_npm_package.mjs",
+    "prepublishOnly": "npm test && npm run check:package"
+  },
+  "repository": {"type": "git", "url": "git+https://github.com/cyrus-xc/weskill.git"},
+  "homepage": "https://github.com/cyrus-xc/weskill#readme",
+  "bugs": {"url": "https://github.com/cyrus-xc/weskill/issues"},
+  "keywords": ["wechat", "mcp", "skills", "codex", "claude", "linux", "agent"],
+  "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/"}
+}

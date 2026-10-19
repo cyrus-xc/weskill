@@ -24,3 +24,5 @@ core
 .env
 .env.*
 !.env.example
+/node_modules/
+/*.tgz

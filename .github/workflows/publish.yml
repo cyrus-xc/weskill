@@ -1,0 +1,56 @@
+name: Publish release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to release
+        required: true
+        default: v0.4.2
+concurrency:
+  group: publish-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: npm install --global npm@12.2.0
+      - run: npm ci --ignore-scripts
+      - run: python -m pip install -e . build 'setuptools>=77'
+      - run: npm test
+      - run: python -m unittest discover -s tests -q
+      - run: python scripts/check_release.py
+      - run: npm run check:package
+      - run: mkdir -p dist && npm pack --ignore-scripts --pack-destination dist
+      - run: python tools/smoke_npm.py dist/weskill-*.tgz
+      - run: python tools/build_release.py
+      - name: Publish npm with trusted publishing (OIDC)
+        run: node tools/publish_npm.mjs
+      - name: Upload GitHub release artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version="${RELEASE_TAG#v}"
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --title "weSkill $RELEASE_TAG" --notes-file "docs/releases/$version.md"
+          fi
+          gh release upload "$RELEASE_TAG" "dist/weskill-$version.tgz" "dist/weskill-$version.tar.gz" dist/weskill-"$version"-*.whl "dist/weskill-plugin-$version.zip" dist/SHA256SUMS --clobber

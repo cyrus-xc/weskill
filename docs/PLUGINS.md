@@ -1,6 +1,6 @@
 # Codex 与 Claude 插件发布准备
 
-同一插件中的 `weskill` 总入口、群管理、好友管理、表情与朋友圈 Skill 服务于两端，插件身份与版本均为 `weskill` / `0.4.2`。skill 提供操作流程，原生 MCP 环境按 README 单独安装与注册；插件不包含私有配置、客户端二进制或预编译原生库。
+同一插件中的 `weskill` 总入口、群管理、好友管理、表情与朋友圈 Skill 服务于两端，插件身份与版本均为 `weskill` / `0.4.2`。skill 提供操作流程，安装由 npm CLI 统一组织；插件不包含私有配置、客户端二进制或预编译原生库。
 
 ```text
 .agents/plugins/marketplace.json            Codex 本地 marketplace
@@ -24,23 +24,18 @@ plugins/weskill/
 
 Codex 使用仍受支持的 `.codex-plugin/plugin.json` 布局，Claude 使用 `.claude-plugin/plugin.json` 和默认 `skills/` 目录。插件没有生命周期 hooks，也没有自动启动原生注入的 MCP 配置。
 
-## 本机验证
-
-先按 README 注册 MCP，再执行对应宿主命令：
+## 推荐安装
 
 ```bash
-codex plugin marketplace add "$PWD"
-codex plugin add weskill@weskill-local
+npm install -g weskill
+weskill setup
+weskill install codex
+# 或 weskill install claude
 ```
 
-```bash
-claude plugin validate .
-claude plugin validate ./plugins/weskill
-claude plugin marketplace add "$PWD"
-claude plugin install weskill@weskill-local
-```
+CLI 注册本机 MCP，再从 npm 包内 marketplace 安装五个 Skill。插件与 Python 执行层在同一 npm 包中分发；用户级 Python 环境和操作账本保存在包目录之外。其他平台使用 `weskill config` 和 `weskill skills --dir`。
 
-重新加载插件或新开会话。验证“列出当前能力”“搜索群”“重名目标”“发送超时”“朋友圈读取与明确可见范围的发布”等场景；涉及真实发送时使用用户明确指定的测试会话与正文。
+完整参数与源码方式见 [安装指南](INSTALL.md)。从源代码验证插件布局时仍可在仓库根目录调用宿主的 marketplace add / plugin install 命令。
 
 ## 形成公开包
 
@@ -68,3 +63,5 @@ OpenAI 和 Claude 的公开目录有各自的审核与发布流程。本仓库�
 编写时核对日期：2026-10-18。发布时重新检查目标平台当前要求。
 
 插件的 `skills/` 目录会同时安装五项 Skill；`weskill` 保留能力目录及基础操作，其余四项分别处理群、好友、表情与朋友圈任务。升级后重新连接 MCP 或新开会话，原生模式应发现 31 个工具。
+
+发布流水线与 npm OIDC 配置见 [版本发布](RELEASING.md)。

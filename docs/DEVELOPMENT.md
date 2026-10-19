@@ -175,6 +175,8 @@ C / AArch64 shim            必要 ABI、任务包装与原子计数
 
 `.state/` 保存运行与验证结果，`research/` 保存实验资料，两者均忽略。发布包不包含真实账号、联系人、聊天正文、素材下载凭据、客户端二进制或研究内存片段。`check_release.py` 检查配置的私密标记与可见路径，但不能替代人工审阅新增公开内容。
 
+npm 分发与宿主接入的实现见 `bin/weskill.mjs`、`lib/runtime.mjs` 与 `lib/bootstrap.py`；打包检查和真实 tarball 测试见 [版本发布](RELEASING.md)。
+
 README 动画由虚构任务生成，不打开微信。修改 `tools/render_demo.py` 后运行：
 
 ```bash

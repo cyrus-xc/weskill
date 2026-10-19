@@ -3,7 +3,7 @@ name: weskill
 description: "Orchestrate local Linux WeChat tasks: find contacts or groups, read selected chat history, and send user-authorized text, local images or files through the weskill MCP. Route friend/group administration, stickers and Moments to companion skills; discover live capabilities before acting."
 ---
 
-# weskill
+# weSkill
 
 作为整个工具箱的总入口，记录并选择微信操作能力，直接处理目标搜索、消息查询和用户授权的文本、图片和文件发送，通过已连接的本机 `weskill` MCP 服务执行。工具名前缀由宿主决定，按下列工具的实际名称发现即可。skill 本身不提供微信连接。
 
