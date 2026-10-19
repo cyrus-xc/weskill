@@ -17,7 +17,7 @@ weSkill 让 Agent 直接操作 Linux 原生微信：查找联系人、理解聊�
 
 底层通过原生调用执行，**不抢鼠标、不占键盘焦点、不切换窗口**。各个 Skill 复用本机服务与原生连接，服务空闲一小时自动退出，再次调用自动启动。
 
-项目采用 [REA（Reverse Engineer Anything）](https://github.com/morluto/rea) 工作流逆向 Linux 微信，将 ELF 静态分析与 Frida 动态验证所得的原生能力封装成 MCP，再由 Skill 编排任务。探索方法与实现经验记录在 [开发指南](docs/DEVELOPMENT.md)。
+项目采用 [REA（Reverse Engineer Anything）](https://github.com/morluto/rea) 工作流逆向 Linux 微信，将 ELF 静态分析与 Frida 动态验证所得的原生能力封装成 MCP，再由 Skill 编排任务。
 
 [快速开始](#快速开始) · [能力目录](#能力目录) · [we-Agent](#we-agent) · [开发文档](#开发文档)
 
