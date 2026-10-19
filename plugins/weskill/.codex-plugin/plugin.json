@@ -5,15 +5,15 @@
   "license": "MIT",
   "skills": "./skills/",
   "interface": {
-    "displayName": "weskill",
+    "displayName": "weSkill",
     "shortDescription": "微信 Skill 工具箱：消息、好友、群、表情与朋友圈",
-    "longDescription": "weskill 总入口配套群管理、好友管理、表情与朋友圈 Skill，共用本机原生 MCP 和一小时空闲退出服务。支持个人收藏与在线搜索表情、朋友圈时间线与个人动态、文字与图片发布；验证边界见功能文档，当前适配指定 Linux ARM64 微信构建。",
+    "longDescription": "weSkill 总入口配套群管理、好友管理、表情与朋友圈 Skill，共用本机原生 MCP 和一小时空闲退出服务。支持个人收藏与在线搜索表情、朋友圈时间线与个人动态、文字与图片发布；验证边界见功能文档，当前适配指定 Linux ARM64 微信构建。",
     "category": "Productivity",
     "brandColor": "#35C7AE",
     "logo": "./assets/logo.png",
     "composerIcon": "./assets/logo.png",
     "defaultPrompt": [
-      "使用 weskill 检查本机微信连接，先列出当前可用能力。"
+      "使用 weSkill 检查本机微信连接，先列出当前可用能力。"
     ]
   }
 }

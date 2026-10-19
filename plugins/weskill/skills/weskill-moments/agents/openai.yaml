@@ -1,5 +1,5 @@
 interface:
-  display_name: "weskill 朋友圈"
+  display_name: "weSkill 朋友圈"
   short_description: "Read and publish WeChat Moments"
   brand_color: "#35C7AE"
   default_prompt: "Use $weskill-moments to discover the available native WeChat tools for this task."

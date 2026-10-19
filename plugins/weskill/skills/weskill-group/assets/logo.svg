@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-labelledby="title desc">
-  <title id="title">weskill</title>
+  <title id="title">weSkill</title>
   <desc id="desc">Two overlapping glass conversation bubbles, with mint and blue refractions on a pearl tile.</desc>
   <defs>
     <linearGradient id="tile" x1="70" y1="22" x2="440" y2="500" gradientUnits="userSpaceOnUse"><stop stop-color="#FCFDFE"/><stop offset=".52" stop-color="#E9F3F3"/><stop offset="1" stop-color="#DCE7F2"/></linearGradient>

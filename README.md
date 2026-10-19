@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/logo.svg" width="136" height="136" alt="weskill：薄荷与蓝色折射的玻璃对话气泡">
+  <img src="assets/logo.svg" width="136" height="136" alt="weSkill：薄荷与蓝色折射的玻璃对话气泡">
 </p>
 
-<h1 align="center">weskill</h1>
+<h1 align="center">weSkill</h1>
 
 <p align="center"><strong>强大的 Linux 微信 Skill，把一句话变成一连串微信操作。</strong></p>
 
@@ -13,16 +13,16 @@
   <img alt="Local MCP" src="https://img.shields.io/badge/MCP-local-192D38">
 </p>
 
-weskill 让 Agent 直接操作 Linux 原生微信：查找联系人、理解聊天记录、发送消息与文件、管理好友和群聊、使用表情、读写朋友圈。一个总入口、五个协作 Skill、31 个 MCP 工具，让多步任务自然衔接。
+weSkill 让 Agent 直接操作 Linux 原生微信：查找联系人、理解聊天记录、发送消息与文件、管理好友和群聊、使用表情、读写朋友圈。一个总入口、五个协作 Skill、31 个 MCP 工具，让多步任务自然衔接。
 
 底层通过原生调用执行，**不抢鼠标、不占键盘焦点、不切换窗口**。各个 Skill 复用本机服务与原生连接，服务空闲一小时自动退出，再次调用自动启动。
 
 项目采用 [REA（Reverse Engineer Anything）](https://github.com/morluto/rea) 工作流逆向 Linux 微信，将 ELF 静态分析与 Frida 动态验证所得的原生能力封装成 MCP，再由 Skill 编排任务。探索方法与实现经验记录在 [开发指南](docs/DEVELOPMENT.md)。
 
-[快速开始](#快速开始) · [能力目录](#能力目录) · [常驻响应控制流](#常驻响应控制流) · [开发文档](#开发文档)
+[快速开始](#快速开始) · [能力目录](#能力目录) · [we-Agent](#we-agent) · [开发文档](#开发文档)
 
 <p align="center">
-  <img src="assets/weskill-demo.gif" width="960" alt="weskill 使用流程：发送消息与媒体、群协作、表情与朋友圈">
+  <img src="assets/weskill-demo.gif" width="960" alt="weSkill 使用流程：发送消息与媒体、群协作、表情与朋友圈">
 </p>
 
 ## 一句话，完成微信任务
@@ -159,22 +159,13 @@ claude plugin install weskill@weskill-local
 
 客户端返回 `client_success` 即按发送成功处理。写操作使用持久幂等键，结果未知时不自动重发；运行记录保存在 `.state/`。参数、服务管理与连接排查见 [工具参考](docs/TOOLS.md)。
 
-## 常驻响应控制流
+## we-Agent
 
-weskill 与 [we-Agent](https://github.com/cyrus-xc/we-Agent) 联合开发、独立发布。在双仓架构中，we-Agent 承载“接收事件 → Agent 决策 → 执行操作 → 记录结果”的常驻响应控制流，以及流程、知识库、行为边界和看板；weskill 提供微信原生操作、事件采集职责与 Skill/MCP 接口。
-
-```text
-we-Agent   事件 → 流程 / 知识库 / Agent → 行动 → 结果记录
-                                      │
-weskill                   Skill / MCP → Linux 微信
-```
-
-weskill 可以独立用于交互任务。两仓职责、现有接口与事件边界见 [联合开发约定](docs/INTEGRATION.md)。
+[we-Agent](https://github.com/cyrus-xc/we-Agent) 是基于 weSkill 的 Agent 流程管理项目，面向常驻响应、流程编排、知识库与行为控制。
 
 ## 开发文档
 
 - [如何探索与构建原生工具](docs/DEVELOPMENT.md)：从入口线索、ABI 和线程到回调生命周期、幂等与测试。
-- [双仓库联合开发](docs/INTEGRATION.md)：接口归属、协作方式与发布约定。
 - [工具参考](docs/TOOLS.md) · [能力与验证](docs/FEATURES.md) · [兼容性](docs/COMPATIBILITY.md) · [插件打包](docs/PLUGINS.md)。
 
 ```bash
@@ -182,10 +173,10 @@ weskill 可以独立用于交互任务。两仓职责、现有接口与事件边
 .venv/bin/python scripts/check_release.py
 ```
 
-原始研究、帐号数据与实验报告保留在本地忽略目录。工具使用本机 stdio 和同用户 Unix socket；查询结果会交给调用它的 AI 客户端。weskill 是采用 [MIT License](LICENSE) 的非官方项目，与腾讯、微信、OpenAI 或 Anthropic 无隶属关系。
+原始研究、帐号数据与实验报告保留在本地忽略目录。工具使用本机 stdio 和同用户 Unix socket；查询结果会交给调用它的 AI 客户端。weSkill 是采用 [MIT License](LICENSE) 的非官方项目，与腾讯、微信、OpenAI 或 Anthropic 无隶属关系。
 
 ## 引用与致谢
 
 [REA](https://github.com/morluto/rea) · [Frida](https://frida.re/docs/home/) · [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Pillow](https://pillow.readthedocs.io/en/stable/) · [OpenAI 插件规范](https://developers.openai.com/plugins/build/plugins) · [Claude Code 插件规范](https://code.claude.com/docs/en/plugins-reference)。协议字段研究的更多参考见 [开发指南](docs/DEVELOPMENT.md#参考资料)。
 
-觉得有用，欢迎给 **weskill 点一颗 Star ⭐**，也欢迎贡献新能力、兼容适配与使用反馈。
+觉得有用，欢迎给 **weSkill 点一颗 Star ⭐**，也欢迎贡献新能力、兼容适配与使用反馈。

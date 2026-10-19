@@ -1,5 +1,5 @@
 interface:
-  display_name: "weskill"
+  display_name: "weSkill"
   short_description: "Orchestrate Linux WeChat tasks with a local MCP"
   icon_large: "./assets/logo.svg"
   icon_small: "./assets/logo.png"

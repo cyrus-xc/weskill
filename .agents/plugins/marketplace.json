@@ -1,7 +1,7 @@
 {
   "name": "weskill-local",
   "interface": {
-    "displayName": "weskill"
+    "displayName": "weSkill"
   },
   "plugins": [
     {

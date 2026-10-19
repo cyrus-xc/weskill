@@ -45,7 +45,7 @@ def render(scene_index, tick, fonts):
     draw.line((22, 78, 1058, 78), fill='#2D414D')
     for x, color in ((47, '#FA827B'), (66, '#F1C36D'), (85, '#68D7B1')):
         draw.ellipse((x, 44, x+10, 54), fill=color)
-    draw.text((454, 35), 'weskill', font=fonts['brand'], fill=INK)
+    draw.text((454, 35), 'weSkill', font=fonts['brand'], fill=INK)
     draw.rounded_rectangle((922, 35, 1034, 62), radius=13, fill='#193C37')
     draw.ellipse((935, 45, 941, 51), fill=MINT)
     draw.text((950, 35), '本机原生', font=fonts['small'], fill=MINT)
@@ -63,7 +63,7 @@ def render(scene_index, tick, fonts):
     draw.text((46, 510), 'Skill → MCP → 微信', font=fonts['small'], fill=MUTED)
     draw.text((46, 538), '无需切换桌面焦点', font=fonts['small'], fill=MUTED)
     draw.text((274, 96), f'0{scene_index+1}  /  {title}', font=fonts['small'], fill=MINT)
-    draw.text((274, 127), '把任务交给 weskill', font=fonts['heading'], fill=INK)
+    draw.text((274, 127), '把任务交给 weSkill', font=fonts['heading'], fill=INK)
     draw.rounded_rectangle((273, 179, 1027, 244), radius=15, fill='#1D3343', outline='#36505F')
     text_count = min(len(prompt), max(0, int((tick+1)*len(prompt)/7)))
     visible = prompt[:text_count]
