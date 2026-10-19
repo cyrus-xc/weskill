@@ -8,7 +8,7 @@
       "name": "weskill",
       "source": "./plugins/weskill",
       "description": "weSkill：Linux 微信操作 Skill 与本机 MCP",
-      "version": "0.4.2",
+      "version": "0.5.0",
       "license": "MIT"
     }
   ]

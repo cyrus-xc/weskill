@@ -53,11 +53,12 @@ def main():
             except ValueError:
                 errors.append(f'{name}: invalid JSON')
 
+    package = json.loads((ROOT / 'package.json').read_text())
     plugin = ROOT / 'plugins/weskill'
     for host in ('codex', 'claude'):
         manifest = plugin / f'.{host}-plugin/plugin.json'
         value = json.loads(manifest.read_text())
-        if value.get('name') != 'weskill' or value.get('version') != '0.4.2':
+        if value.get('name') != 'weskill' or value.get('version') != package['version']:
             errors.append(f'{manifest.relative_to(ROOT)}: inconsistent plugin identity')
     required = [ROOT / 'docs/EMOJI.md', ROOT / 'docs/MOMENTS.md',
                 ROOT / '.agents/plugins/marketplace.json',

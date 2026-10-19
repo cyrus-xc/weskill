@@ -1,6 +1,6 @@
 # Codex 与 Claude 插件发布准备
 
-同一插件中的 `weskill` 总入口、群管理、好友管理、表情与朋友圈 Skill 服务于两端，插件身份与版本均为 `weskill` / `0.4.2`。skill 提供操作流程，安装由 npm CLI 统一组织；插件不包含私有配置、客户端二进制或预编译原生库。
+同一插件中的 `weskill` 总入口、群管理、好友管理、表情与朋友圈 Skill 服务于两端，插件身份与版本均为 `weskill` / `0.5.0`。skill 提供操作流程，安装由 npm CLI 统一组织；插件不包含私有配置、客户端二进制或预编译原生库。
 
 ```text
 .agents/plugins/marketplace.json            Codex 本地 marketplace
@@ -46,7 +46,7 @@ CLI 注册本机 MCP，再从 npm 包内 marketplace 安装五个 Skill。插件
 ```bash
 mkdir -p dist
 cd plugins/weskill
-python3 -m zipfile -c ../../dist/weskill-plugin-0.4.2.zip .codex-plugin .claude-plugin skills assets LICENSE
+python3 -m zipfile -c ../../dist/weskill-plugin-0.5.0.zip .codex-plugin .claude-plugin skills assets LICENSE
 cd ../..
 ```
 

@@ -39,13 +39,13 @@ weskill skills --dir /path/to/agent/skills
   "mcpServers": {
     "weskill": {
       "command": "npx",
-      "args": ["-y", "weskill@0.4.2", "mcp"]
+      "args": ["-y", "weskill@0.5.0", "mcp"]
     }
   }
 }
 ```
 
-使用 npx 前建议先在终端执行 `npx -y weskill@0.4.2 setup`，让依赖准备完成。
+使用 npx 前建议先在终端执行 `npx -y weskill@0.5.0 setup`，让依赖准备完成。
 
 ## 运行目录与服务管理
 

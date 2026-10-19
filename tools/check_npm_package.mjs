@@ -15,7 +15,7 @@ const paths = new Set(pack.files.map(file => file.path));
 for (const file of ['bin/weskill.mjs', 'lib/bootstrap.py', 'lib/runtime.mjs', 'pyproject.toml',
   'native/readonly_executor_shim.c', 'native/readonly_executor_shim.S', 'src/weskill/server.py',
   'src/weskill/assets/executor_bridge.js', '.agents/plugins/marketplace.json',
-  '.claude-plugin/marketplace.json', 'plugins/weskill/.codex-plugin/plugin.json'])
+  '.claude-plugin/marketplace.json', 'plugins/weskill/.codex-plugin/plugin.json', `docs/releases/${metadata.version}.md`])
   assert(paths.has(file), `Missing runtime file: ${file}`);
 const markerFile = path.join(root, '.state/publication-private-markers.json');
 const markers = existsSync(markerFile) ? JSON.parse(readFileSync(markerFile, 'utf8')) : [];

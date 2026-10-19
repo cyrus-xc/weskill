@@ -12,7 +12,7 @@ python -m unittest discover -s tests -q
 python scripts/check_release.py
 mkdir -p dist
 npm pack --ignore-scripts --pack-destination dist
-python tools/smoke_npm.py dist/weskill-0.4.2.tgz
+python tools/smoke_npm.py dist/weskill-0.5.0.tgz
 ```
 
 冒烟测试从真正的 tarball 解包到带空格的临时目录，创建独立 Python 环境，通过真实 MCP SDK 握手两次，不调用微信业务。ARM64 环境可增加 `--native` 验证 native 依赖/编译和 32 工具发现，仍不附加微信。
